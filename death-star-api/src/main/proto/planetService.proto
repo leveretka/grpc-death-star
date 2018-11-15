@@ -1,0 +1,20 @@
+syntax = "proto3";
+
+option java_package = "ua.nedz.grpc";
+option java_outer_classname = "DeathStarProto";
+option objc_class_prefix = "DSP";
+
+package deathstar;
+
+import "planet.proto";
+import "google/protobuf/empty.proto";
+
+service PlanetService {
+    rpc GetAllPlanets(google.protobuf.Empty) returns (Planets) {}
+    rpc RemovePlanet(RemovePlanetRequest) returns (bool) {}
+    rpc GenerateNewPlanet(google.protobuf.Empty) returns (Planet) {}
+}
+
+message RemovePlanetRequest {
+    int64 planetId = 1;
+}

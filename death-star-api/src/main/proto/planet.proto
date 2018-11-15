@@ -1,0 +1,17 @@
+syntax = "proto3";
+
+option java_package = "ua.nedz.grpc";
+option java_outer_classname = "DeathStarProto";
+option objc_class_prefix = "DSP";
+
+package deathstar;
+
+message Planet {
+    int64 planetId = 1;
+    string name = 2;
+    int64 weight = 3;
+}
+
+message Planets {
+    repeated Planet planets = 1;
+}

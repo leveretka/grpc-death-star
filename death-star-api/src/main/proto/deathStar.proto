@@ -6,30 +6,13 @@ option objc_class_prefix = "DSP";
 
 package deathstar;
 
+import "planet.proto";
+
 service DeathStarService {
-    rpc destroy (stream DestroyPlanetRequest) returns (stream Planets) {}
+    rpc Destroy (stream DestroyPlanetRequest) returns (stream Planets) {}
 }
 
 message DestroyPlanetRequest {
     int64 userId = 1;
     int64 planetId = 2;
-}
-
-message Planet {
-    int64 planetId = 1;
-    string name = 2;
-    Color color = 3;
-
-    enum Color {
-        RED = 0;
-        ORANGE = 1;
-        YELLOW = 2;
-        WHITE = 3;
-        BLUE = 4;
-        GREEN = 5;
-    }
-}
-
-message Planets {
-    repeated Planet planets = 1;
 }
