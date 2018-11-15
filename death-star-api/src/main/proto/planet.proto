@@ -1,8 +1,7 @@
 syntax = "proto3";
 
 option java_package = "ua.nedz.grpc";
-option java_outer_classname = "DeathStarProto";
-option objc_class_prefix = "DSP";
+option java_outer_classname = "PlanetProto";
 
 package deathstar;
 

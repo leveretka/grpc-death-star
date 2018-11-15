@@ -4,17 +4,17 @@ import io.grpc.Server
 import io.grpc.ServerBuilder
 
 fun main(args: Array<String>) {
-    val server = DeathStarServer()
+    val server = PlanetServer()
     server.start()
     server.blockUntilShutdown()
 }
 
-class DeathStarServer (private val port: Int = 50051, private val serverBuilder: ServerBuilder<*> = ServerBuilder.forPort(port)) {
+class PlanetServer (private val port: Int = 50061, private val serverBuilder: ServerBuilder<*> = ServerBuilder.forPort(port)) {
     private lateinit var server: Server
 
     fun start() {
         server = serverBuilder
-                .addService(DeathStarServiceImpl())
+                .addService(PlanetServiceImpl())
                 .build()
                 .start()
         println("Server started!")

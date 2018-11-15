@@ -5,21 +5,22 @@ import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.channels.produce
 import ua.nedz.grpc.DeathStarProto
 import ua.nedz.grpc.DeathStarServiceGrpcKt
+import ua.nedz.grpc.PlanetProto
 
 class DeathStarServiceImpl : DeathStarServiceGrpcKt.DeathStarServiceImplBase() {
 
     @ExperimentalCoroutinesApi
-    override suspend fun destroy(requests: ReceiveChannel<DeathStarProto.DestroyPlanetRequest>) = produce<DeathStarProto.Planets> {
+    override suspend fun destroy(requests: ReceiveChannel<DeathStarProto.DestroyPlanetRequest>) = produce<PlanetProto.Planets> {
         //getAllPlanets
-        val planetsList = listOf<DeathStarProto.Planet>()
-        send(DeathStarProto.Planets.newBuilder().addAllPlanets(planetsList).build())
+        val planetsList = listOf<PlanetProto.Planet>()
+        send(PlanetProto.Planets.newBuilder().addAllPlanets(planetsList).build())
             for (request in requests) {
                 //remove planet
                 //write score
                 //send event
                 //generate new planet
                 //get all planets
-                send(DeathStarProto.Planets.newBuilder().addAllPlanets(planetsList).build())
+                send(PlanetProto.Planets.newBuilder().addAllPlanets(planetsList).build())
             }
     }
 
