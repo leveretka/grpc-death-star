@@ -39,14 +39,10 @@ dependencies {
     compile "io.grpc:grpc-stub:${grpcVersion}"
     compile group: 'org.jetbrains.kotlinx', name: 'kotlinx-coroutines-core', version: '1.0.0'
     compile group: 'org.jetbrains.kotlinx', name: 'kotlinx-coroutines-guava', version: '1.0.0'
-    compile "com.fireflysource:firefly-kotlin-ext:4.9.4"
-    compile "com.zaxxer:HikariCP:2.6.1"
-    compile 'com.vladsch.kotlin-jdbc:kotlin-jdbc:0.4.4'
 
     compile files ('death-star-api-1.0-SNAPSHOT.jar')
 
     testCompile group: 'junit', name: 'junit', version: '4.12'
-    testCompile 'io.kotlintest:kotlintest-runner-junit5:3.1.10'
     testCompile "io.grpc:grpc-testing:${grpcVersion}"
     testCompile group: 'com.nhaarman', name: 'mockito-kotlin', version: '1.6.0'
 }
@@ -61,7 +57,7 @@ compileTestKotlin {
 jar {
     manifest {
         attributes(
-                'Main-Class': 'ua.nedz.demo.DeathStarServerKt'
+                'Main-Class': 'ua.nedz.demo.ScoreServerKt'
         )
     }
 }

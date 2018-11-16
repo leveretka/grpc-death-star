@@ -1,30 +1,39 @@
 package ua.nedz.demo
 
-import com.firefly.db.SQLClient
-import com.firefly.db.jdbc.JDBCClient
+import com.vladsch.kotlin.jdbc.HikariCP
+import com.vladsch.kotlin.jdbc.session
+import com.vladsch.kotlin.jdbc.using
 import com.zaxxer.hikari.HikariConfig
 import com.zaxxer.hikari.HikariDataSource
 
 object PlanetRepo {
-/*    private val sqlClient: SQLClient
 
         init {
-            val config = HikariConfig()
-            config.jdbcUrl = "jdbc:mysql://192.168.0.102:3306/death_star_db"
-            config.driverClassName = "com.mysql.jdbc.Driver"
-            config.isAutoCommit = false
-            config.username = "root"
-            config.password = "test"
-            val ds = HikariDataSource(config)
-            sqlClient = JDBCClient(ds)
-        */
+//            HikariCP.default("dbc:mysql://192.168.0.102:3306/death_star_db",
+//                    "root", "test")
+//
+//            using(session(HikariCP.dataSource())) { session ->
+//                session.execute()
+//            }
+//
+//            val config = HikariConfig()
+//            config.jdbcUrl = "jdbc:mysql://192.168.0.102:3306/death_star_db"
+//            config.driverClassName = "com.mysql.jdbc.Driver"
+//            config.isAutoCommit = false
+//            config.username = "root"
+//            config.password = "test"
+//            val ds = HikariDataSource(config)
+//            sqlClient = JDBCClient(ds)
+        }
 
 
-    private val planetsList = mutableListOf<Planet>()
+    private val planetsList = mutableMapOf<Long,Planet>()
 
-    fun getAllPlanets() = planetsList.filter { it.isAlive }
-    fun deletePlanet(id: Long) = planetsList.filter { it.id == id }.map { it.copy(isAlive = false) }
-    fun insertPlanet(planet: Planet) = planetsList.add(planet)
+    fun getAllPlanets() = planetsList.values.filter { it.isAlive }
+    fun deletePlanet(id: Long) = planetsList[id]?.let {
+        planetsList[id] = it.copy(isAlive = false)
+    }
+    fun insertPlanet(planet: Planet) = planetsList.putIfAbsent(planet.id, planet)
 
     val names = listOf("Abafar", "Ahch-To", "Akiva", "Alderaan", "Ando", "Anoat", "Atollon", "Batuu", "Bespin",
             "Cantonica", "Castilon", "Cato Neimoidia", "Chandrila", "Christophsis", "Concord Dawn", "Corellia",

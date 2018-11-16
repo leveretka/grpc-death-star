@@ -1,7 +1,7 @@
 package ua.nedz.demo
 
 import com.google.protobuf.Empty
-import ua.nedz.grpc.PlaneServiceProto
+import ua.nedz.grpc.PlanetServiceProto
 import ua.nedz.grpc.PlanetProto
 import ua.nedz.grpc.PlanetServiceGrpcKt
 import java.util.concurrent.atomic.AtomicLong
@@ -12,10 +12,7 @@ class PlanetServiceImpl : PlanetServiceGrpcKt.PlanetServiceImplBase() {
     private val counter = AtomicLong(1000L)
 
     override suspend fun generateNewPlanet(request: Empty): PlanetProto.Planet {
-        val weight: Long = randomWeight()
-        val name = randomName()
-
-        val planet = Planet(counter.incrementAndGet(), name, weight, true)
+        val planet = Planet(counter.incrementAndGet(), randomName(), randomWeight())
         PlanetRepo.insertPlanet(planet)
         return PlanetProto.Planet
                 .newBuilder()
@@ -38,7 +35,7 @@ class PlanetServiceImpl : PlanetServiceGrpcKt.PlanetServiceImplBase() {
                 else -> 0
             }
 
-    override suspend fun getAllPlanets(request: Empty) =
+    override suspend fun getAllPlanets(request: Empty): PlanetProto.Planets =
             PlanetProto.Planets.newBuilder().addAllPlanets(
                     PlanetRepo.getAllPlanets().map {
                         PlanetProto.Planet
@@ -50,9 +47,9 @@ class PlanetServiceImpl : PlanetServiceGrpcKt.PlanetServiceImplBase() {
                     })
                     .build()
 
-    override suspend fun removePlanet(request: PlaneServiceProto.RemovePlanetRequest): PlaneServiceProto.RemovePlanetResponse {
+    override suspend fun removePlanet(request: PlanetServiceProto.RemovePlanetRequest): PlanetServiceProto.RemovePlanetResponse {
         PlanetRepo.deletePlanet(request.planetId)
-        return PlaneServiceProto.RemovePlanetResponse.newBuilder().setResult(true).build()
+        return PlanetServiceProto.RemovePlanetResponse.newBuilder().setResult(true).build()
     }
 
 }
