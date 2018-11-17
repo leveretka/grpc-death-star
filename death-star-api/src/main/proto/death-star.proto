@@ -11,8 +11,3 @@ import "planet.proto";
 service DeathStarService {
     rpc Destroy (stream DestroyPlanetRequest) returns (stream Planets) {}
 }
-
-message DestroyPlanetRequest {
-    int64 userId = 1;
-    int64 planetId = 2;
-}

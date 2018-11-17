@@ -15,10 +15,12 @@ class DeathStarServiceImpl : DeathStarServiceGrpcKt.DeathStarServiceImplBase() {
 
     private var planetTarget: String? = System.getenv("PLANET_SERVICE_TARGET")
     private var scoreTarget: String? = System.getenv("SCORE_SERVICE_TARGET")
+    private var logTarget: String? = System.getenv("LOG_SERVICE_TARGET")
 
     init {
         if (planetTarget.isNullOrEmpty()) planetTarget = "192.168.0.102:50061"
         if (scoreTarget.isNullOrEmpty()) scoreTarget = "192.168.0.102:50071"
+        if (scoreTarget.isNullOrEmpty()) logTarget = "192.168.0.102:50081"
     }
 
     private val planetChannel = ManagedChannelBuilder
@@ -37,8 +39,16 @@ class DeathStarServiceImpl : DeathStarServiceGrpcKt.DeathStarServiceImplBase() {
             .build()
     private val scoreStub = ScoreServiceGrpcKt.newStub(scoreChannel)
 
+    private val logChannel = ManagedChannelBuilder
+            .forTarget(logTarget)
+            .nameResolverFactory(DnsNameResolverProvider())
+            .loadBalancerFactory(RoundRobinLoadBalancerFactory.getInstance())
+            .usePlaintext(true)
+            .build()
+    private val logStub = LogServiceGrpcKt.newStub(logChannel)
+
     @ExperimentalCoroutinesApi
-    override suspend fun destroy(requests: ReceiveChannel<DeathStarProto.DestroyPlanetRequest>): ReceiveChannel<PlanetProto.Planets> {
+    override suspend fun destroy(requests: ReceiveChannel<PlanetProto.DestroyPlanetRequest>): ReceiveChannel<PlanetProto.Planets> {
         val channel = Channel<PlanetProto.Planets>()
         channel.send(planetStub.getAllPlanets(Empty.getDefaultInstance()))
         for (request in requests) {
@@ -49,9 +59,11 @@ class DeathStarServiceImpl : DeathStarServiceGrpcKt.DeathStarServiceImplBase() {
             scoreStub.addScore(ScoreServiceProto.AddScoreRequest
                     .newBuilder()
                     .setUserId(request.userId)
+                    .setToAdd(request.weight)
                     .build())
-            //send event
-            planetStub.generateNewPlanet(Empty.getDefaultInstance())
+            logStub.destroyedPlanet(request)
+            val newPlanet = planetStub.generateNewPlanet(Empty.getDefaultInstance())
+            logStub.newPlanet(newPlanet)
             listeners.forEach { it.send(planetStub.getAllPlanets(Empty.getDefaultInstance())) }
         }
         return channel

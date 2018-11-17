@@ -1,0 +1,25 @@
+syntax = "proto3";
+
+option java_package = "ua.nedz.grpc";
+option java_outer_classname = "LogServiceProto";
+option objc_class_prefix = "LSP";
+
+package deathstar;
+
+import "planet.proto";
+import "google/protobuf/empty.proto";
+
+service LogService {
+    rpc NewUser(User) returns (stream Log) {}
+    rpc DestroyedPlanet(DestroyPlanetRequest) returns (google.protobuf.Empty) {}
+    rpc NewPlanet(Planet) returns (google.protobuf.Empty) {}
+}
+
+message User {
+    int64 userId = 1;
+    string name = 2;
+}
+
+message Log {
+    string message = 1;
+}
