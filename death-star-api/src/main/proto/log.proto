@@ -16,7 +16,6 @@ service LogService {
 }
 
 message User {
-    int64 userId = 1;
     string name = 2;
 }
 

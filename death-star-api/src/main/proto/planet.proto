@@ -9,6 +9,7 @@ message Planet {
     int64 planetId = 1;
     string name = 2;
     int64 weight = 3;
+    int32 img = 4;
 }
 
 message Planets {
@@ -16,7 +17,7 @@ message Planets {
 }
 
 message DestroyPlanetRequest {
-    int64 userId = 1;
+    string userName = 1;
     int64 planetId = 2;
     int64 weight = 3;
 }

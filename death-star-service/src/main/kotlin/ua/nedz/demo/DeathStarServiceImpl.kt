@@ -52,6 +52,7 @@ class DeathStarServiceImpl : DeathStarServiceGrpcKt.DeathStarServiceImplBase() {
     @ExperimentalCoroutinesApi
     override suspend fun destroy(requests: ReceiveChannel<PlanetProto.DestroyPlanetRequest>): ReceiveChannel<PlanetProto.Planets> {
         val channel = Channel<PlanetProto.Planets>()
+        listeners.add(channel)
         println("Sending all planets")
         GlobalScope.launch {
             channel.send(planetStub.getAllPlanets(Empty.getDefaultInstance()))
@@ -67,17 +68,15 @@ class DeathStarServiceImpl : DeathStarServiceGrpcKt.DeathStarServiceImplBase() {
                         .build())
                 scoreStub.addScore(ScoreServiceProto.AddScoreRequest
                         .newBuilder()
-                        .setUserId(request.userId)
+                        .setUserName(request.userName)
                         .setToAdd(request.weight)
                         .build())
                 logStub.destroyedPlanet(request)
                 val newPlanet = planetStub.generateNewPlanet(Empty.getDefaultInstance())
                 logStub.newPlanet(newPlanet)
                 listeners.forEach {
-                    GlobalScope.launch {
-                        it.send(planetStub.getAllPlanets(Empty.getDefaultInstance()))
-                        println("Sent all planets")
-                    }
+                    it.send(planetStub.getAllPlanets(Empty.getDefaultInstance()))
+                    println("Sent all planets")
                 }
             }
         }

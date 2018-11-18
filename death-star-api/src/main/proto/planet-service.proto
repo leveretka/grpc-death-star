@@ -13,6 +13,7 @@ service PlanetService {
     rpc GetAllPlanets(google.protobuf.Empty) returns (Planets) {}
     rpc RemovePlanet(RemovePlanetRequest) returns (RemovePlanetResponse) {}
     rpc GenerateNewPlanet(google.protobuf.Empty) returns (Planet) {}
+    rpc GetPlanetById(GetPlanetRequest) returns (Planet) {}
 }
 
 message RemovePlanetRequest {
@@ -21,4 +22,8 @@ message RemovePlanetRequest {
 
 message RemovePlanetResponse {
     bool result = 1;
+}
+
+message GetPlanetRequest {
+    int64 planetId = 1;
 }

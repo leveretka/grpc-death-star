@@ -17,7 +17,7 @@ class SecurePage : VerticalLayout(), View {
         const val NAME = ""
     }
 
-    val client = DeathStarClient()
+    private val client = DeathStarClient()
 
     private val game = GridLayout(10, 6)
     private val services = HorizontalLayout()
@@ -82,7 +82,7 @@ class SecurePage : VerticalLayout(), View {
                         val curUser = VaadinSession.getCurrent().getAttribute("user").toString()
                         GlobalScope.launch {
                             planets.send(PlanetProto.DestroyPlanetRequest.newBuilder()
-                                    .setUserId(client.users[curUser]!!)
+                                    .setUserName(curUser)
                                     .setPlanetId(planet.planetId)
                                     .setWeight(planet.weight)
                                     .build())
@@ -112,8 +112,7 @@ class SecurePage : VerticalLayout(), View {
                     scoresTable.removeAllComponents()
                     scoresTable.addComponents(Label("User"), Label("Score"))
                     scoresResponse.scoresList.forEach {
-                        val userName = client.users.entries.first { (_, id) -> id == it.userId }.key
-                        scoresTable.addComponents(Label(userName), Label("${it.score}"))
+                        scoresTable.addComponents(Label(it.userName), Label("${it.score}"))
                     }
                 }
             }

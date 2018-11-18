@@ -11,14 +11,14 @@ import ua.nedz.grpc.ScoreServiceProto
 
 class ScoreServiceImpl: ScoreServiceGrpcKt.ScoreServiceImplBase() {
 
-    private val scoresMap = mutableMapOf<Long, Long>()
+    private val scoresMap = mutableMapOf<String, Long>()
     private val listeners = mutableListOf<Channel<ScoreServiceProto.ScoresResponse>>()
 
 
     override suspend fun addScore(request: ScoreServiceProto.AddScoreRequest): Empty {
-        scoresMap.putIfAbsent(request.userId, 0)
-        scoresMap[request.userId]?.let {
-            scoresMap[request.userId] = it + request.toAdd
+        scoresMap.putIfAbsent(request.userName, 0)
+        scoresMap[request.userName]?.let {
+            scoresMap[request.userName] = it + request.toAdd
         }
         notifyListeners(*listeners.toTypedArray())
         return Empty.getDefaultInstance()
@@ -28,7 +28,7 @@ class ScoreServiceImpl: ScoreServiceGrpcKt.ScoreServiceImplBase() {
         val allScores = ScoreServiceProto.ScoresResponse.newBuilder()
                 .addAllScores(scoresMap.entries.map { (id, score) ->
                     ScoreServiceProto.Score.newBuilder()
-                            .setUserId(id)
+                            .setUserName(id)
                             .setScore(score)
                             .build()
                 })
