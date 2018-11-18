@@ -10,13 +10,13 @@ class PlanetRepoTest : StringSpec({
     }
 
     "PlanetRepo should add planet to storage" {
-        val testPlanet = Planet(1000L, "Name", 500L)
+        val testPlanet = Planet(1000L, "Name", 500L, 1)
         PlanetRepo.insertPlanet(testPlanet)
         PlanetRepo.getAllPlanets() shouldBe listOf(testPlanet)
     }
 
     "PlanetRepo should filter out a planet when remove is called" {
-        val testPlanet = Planet(1000L, "Name", 500L)
+        val testPlanet = Planet(1000L, "Name", 500L, 1)
 
         PlanetRepo.insertPlanet(testPlanet)
         PlanetRepo.getAllPlanets() shouldBe listOf(testPlanet)

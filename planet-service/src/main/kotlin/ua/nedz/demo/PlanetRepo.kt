@@ -1,42 +1,18 @@
 package ua.nedz.demo
 
-import com.vladsch.kotlin.jdbc.HikariCP
-import com.vladsch.kotlin.jdbc.session
-import com.vladsch.kotlin.jdbc.using
-import com.zaxxer.hikari.HikariConfig
-import com.zaxxer.hikari.HikariDataSource
-
 object PlanetRepo {
 
     private val planetsList = mutableMapOf<Long, Planet>()
 
-    init {
-
-//            HikariCP.default("dbc:mysql://localhost:3306/death_star_db",
-//                    "root", "test")
-//
-//            using(session(HikariCP.dataSource())) { session ->
-//                session.execute()
-//            }
-//
-//            val config = HikariConfig()
-//            config.jdbcUrl = "jdbc:mysql://localhost:3306/death_star_db"
-//            config.driverClassName = "com.mysql.jdbc.Driver"
-//            config.isAutoCommit = false
-//            config.username = "root"
-//            config.password = "test"
-//            val ds = HikariDataSource(config)
-//            sqlClient = JDBCClient(ds)
-    }
-
     fun initialPlanets() {
         println("Generating initial planets")
         for (i in 1..60)
-            planetsList[i + 500L] = Planet(i + 500L, randomName(), randomWeight())
+            planetsList[i + 500L] = Planet(i + 500L, randomName(), randomWeight(), randomImg())
 
         planetsList.values.forEach { println("Generated ${it.name}") }
     }
 
+    fun getPlanetById(planetId: Long) = planetsList[planetId]
 
     fun getAllPlanets() : List<Planet> {
         println("Inside repo")

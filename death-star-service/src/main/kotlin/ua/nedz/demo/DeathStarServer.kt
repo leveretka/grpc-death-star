@@ -2,6 +2,7 @@ package ua.nedz.demo
 
 import io.grpc.Server
 import io.grpc.ServerBuilder
+import io.grpc.ServerInterceptors
 
 fun main(args: Array<String>) {
     val server = DeathStarServer()
@@ -14,6 +15,7 @@ class DeathStarServer (private val port: Int = 50051, private val serverBuilder:
 
     fun start() {
         server = serverBuilder
+                .addService(ServerInterceptors.intercept(DeathStarServiceImpl(), NotThatEasyInterceptor()))
                 .addService(DeathStarServiceImpl())
                 .build()
                 .start()

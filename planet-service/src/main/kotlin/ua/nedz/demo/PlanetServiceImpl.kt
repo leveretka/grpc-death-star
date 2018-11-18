@@ -13,13 +13,14 @@ class PlanetServiceImpl : PlanetServiceGrpcKt.PlanetServiceImplBase() {
     }
 
     override suspend fun generateNewPlanet(request: Empty): PlanetProto.Planet {
-        val planet = Planet(counter.incrementAndGet(), randomName(), randomWeight())
+        val planet = Planet(counter.incrementAndGet(), randomName(), randomWeight(), randomImg())
         PlanetRepo.insertPlanet(planet)
         return PlanetProto.Planet
                 .newBuilder()
                 .setPlanetId(planet.id)
                 .setName(planet.name)
                 .setWeight(planet.weight)
+                .setImg(planet.img)
                 .build()
     }
 
@@ -33,6 +34,7 @@ class PlanetServiceImpl : PlanetServiceGrpcKt.PlanetServiceImplBase() {
                             .setPlanetId(it.id)
                             .setName(it.name)
                             .setWeight(it.weight)
+                            .setImg(it.img)
                             .build()
                 })
                 .build()
@@ -41,6 +43,18 @@ class PlanetServiceImpl : PlanetServiceGrpcKt.PlanetServiceImplBase() {
     override suspend fun removePlanet(request: PlanetServiceProto.RemovePlanetRequest): PlanetServiceProto.RemovePlanetResponse {
         PlanetRepo.deletePlanet(request.planetId)
         return PlanetServiceProto.RemovePlanetResponse.newBuilder().setResult(true).build()
+    }
+
+    override suspend fun getPlanetById(request: PlanetServiceProto.GetPlanetRequest): PlanetProto.Planet {
+        PlanetRepo.getPlanetById(request.planetId)?.let {
+            return PlanetProto.Planet.newBuilder()
+                    .setPlanetId(it.id)
+                    .setName(it.name)
+                    .setWeight(it.weight)
+                    .setImg(it.img)
+                    .build()
+        }
+        throw PlanetNotFoundException(request.planetId)
     }
 
 }

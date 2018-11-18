@@ -6,13 +6,8 @@ import io.grpc.internal.DnsNameResolverProvider
 import io.grpc.util.RoundRobinLoadBalancerFactory
 import kotlinx.coroutines.channels.ReceiveChannel
 import ua.nedz.grpc.*
-import java.util.concurrent.atomic.AtomicLong
 
 class DeathStarClient {
-
-    private val counter = AtomicLong(1000)
-
-    val users = mutableMapOf<String, Long>()
 
     private var deathStarTarget: String? = System.getenv("DEATH_STAR_SERVICE_TARGET")
     private var scoreTarget: String? = System.getenv("SCORE_SERVICE_TARGET")
@@ -52,10 +47,8 @@ class DeathStarClient {
     fun join(userName: String): JoinResult {
         println("Inside Join")
         val planetsStream = deathStarStub.destroy()
-        users[userName] = counter.incrementAndGet()
         val logStream = logStub.newUser(LogServiceProto.User.newBuilder()
                 .setName(userName)
-                .setUserId(users[userName]!!)
                 .build())
         val scoresStream = scoreStub.scores(Empty.getDefaultInstance())
         println("Received all streams")
@@ -67,7 +60,5 @@ class DeathStarClient {
             val logStream: ReceiveChannel<LogServiceProto.Log>,
             val scoresStream: ReceiveChannel<ScoreServiceProto.ScoresResponse>
     )
-
-
 
 }

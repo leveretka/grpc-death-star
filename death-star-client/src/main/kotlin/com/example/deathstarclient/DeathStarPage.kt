@@ -12,7 +12,7 @@ import ua.nedz.grpc.PlanetProto
 import java.io.File
 
 
-class SecurePage : VerticalLayout(), View {
+class DeathStarPage : VerticalLayout(), View {
     companion object {
         const val NAME = ""
     }
@@ -73,9 +73,8 @@ class SecurePage : VerticalLayout(), View {
                 current.access { game.removeAllComponents() }
                 planetsInGame.planetsList.forEach { planet ->
                     println("received planet")
-                    val imgNumber = planet.planetId % 22 + 1
                     val planetImg = Image("", FileResource(File(
-                            "$basePath/WEB-INF/images/planets/planet$imgNumber.png")))
+                            "$basePath/WEB-INF/images/planets/planet${planet.img}.png")))
                     planetImg.description = planet.name
                     planetImg.caption = "${planet.weight}"
                     planetImg.addClickListener {

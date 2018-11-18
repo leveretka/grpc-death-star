@@ -3,7 +3,7 @@ package ua.nedz.demo
 import kotlin.random.Random
 import kotlin.random.nextInt
 
-data class Planet (val id: Long, val name: String, val weight: Long, var isAlive: Boolean = true)
+data class Planet (val id: Long, val name: String, val weight: Long, val img: Int, var isAlive: Boolean = true)
 
 fun randomName() = PlanetRepo.names[Random.nextInt(1..PlanetRepo.names.size) - 1]
 
@@ -17,3 +17,5 @@ fun randomWeight(): Long =
             in 75..100 -> 10
             else -> 0
         }
+
+fun randomImg(): Int = Random.nextInt(1..22)

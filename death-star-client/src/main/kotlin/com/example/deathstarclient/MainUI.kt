@@ -1,6 +1,7 @@
+@file:Suppress("unused")
+
 package com.example.deathstarclient
 
-import com.example.chatclient.LoginPage
 import com.vaadin.annotations.PreserveOnRefresh
 import com.vaadin.annotations.Push
 import com.vaadin.annotations.Theme
@@ -28,8 +29,8 @@ class MainUI : UI() {
         Notification.show(route)
         navigator.run {
             if (session.getAttribute("user") != null) {
-                addView(SecurePage.NAME, SecurePage::class.java)
-                navigateTo(SecurePage.NAME)
+                addView(DeathStarPage.NAME, DeathStarPage::class.java)
+                navigateTo(DeathStarPage.NAME)
             } else {
                 navigateTo(LoginPage.NAME)
             }

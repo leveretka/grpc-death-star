@@ -1,6 +1,5 @@
-package com.example.chatclient
+package com.example.deathstarclient
 
-import com.example.deathstarclient.SecurePage
 import com.vaadin.navigator.View
 import com.vaadin.server.FileResource
 import com.vaadin.server.Page
@@ -38,8 +37,8 @@ class LoginPage : VerticalLayout(), View {
         val send = Button("Enter")
         send.addClickListener {
             VaadinSession.getCurrent().setAttribute("user", username.value)
-            ui.navigator.addView(SecurePage.NAME, SecurePage::class.java)
-            Page.getCurrent().uriFragment = "!${SecurePage.NAME}"
+            ui.navigator.addView(DeathStarPage.NAME, DeathStarPage::class.java)
+            Page.getCurrent().uriFragment = "!${DeathStarPage.NAME}"
         }
 
         content.run {
