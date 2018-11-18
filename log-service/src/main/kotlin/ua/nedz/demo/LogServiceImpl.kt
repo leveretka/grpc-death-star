@@ -1,8 +1,10 @@
 package ua.nedz.demo
 
 import com.google.protobuf.Empty
+import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.ReceiveChannel
+import kotlinx.coroutines.launch
 import ua.nedz.grpc.LogServiceGrpcKt
 import ua.nedz.grpc.LogServiceProto
 import ua.nedz.grpc.PlanetProto
@@ -13,7 +15,7 @@ class LogServiceImpl: LogServiceGrpcKt.LogServiceImplBase() {
     private val planetNames = mutableMapOf<Long, String>()
 
     override suspend fun newPlanet(request: PlanetProto.Planet): Empty {
-        notifyUsers("{Planet ${request.name} was born.")
+        notifyUsers("Planet ${request.name} was born.")
         planetNames[request.planetId] = request.name
         return Empty.getDefaultInstance()
     }
@@ -32,9 +34,12 @@ class LogServiceImpl: LogServiceGrpcKt.LogServiceImplBase() {
     }
 
     private suspend fun notifyUsers(message: String) =
-            listeners.forEach {
+        listeners.forEach {
+            GlobalScope.launch {
                 it.send(LogServiceProto.Log.newBuilder()
                         .setMessage(message)
                         .build())
             }
+        }
+
 }

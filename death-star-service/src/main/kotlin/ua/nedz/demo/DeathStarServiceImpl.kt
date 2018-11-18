@@ -5,8 +5,10 @@ import io.grpc.ManagedChannelBuilder
 import io.grpc.internal.DnsNameResolverProvider
 import io.grpc.util.RoundRobinLoadBalancerFactory
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.ReceiveChannel
+import kotlinx.coroutines.launch
 import ua.nedz.grpc.*
 
 class DeathStarServiceImpl : DeathStarServiceGrpcKt.DeathStarServiceImplBase() {
@@ -18,9 +20,9 @@ class DeathStarServiceImpl : DeathStarServiceGrpcKt.DeathStarServiceImplBase() {
     private var logTarget: String? = System.getenv("LOG_SERVICE_TARGET")
 
     init {
-        if (planetTarget.isNullOrEmpty()) planetTarget = "192.168.0.102:50061"
-        if (scoreTarget.isNullOrEmpty()) scoreTarget = "192.168.0.102:50071"
-        if (scoreTarget.isNullOrEmpty()) logTarget = "192.168.0.102:50081"
+        if (planetTarget.isNullOrEmpty()) planetTarget = "localhost:50061"
+        if (scoreTarget.isNullOrEmpty()) scoreTarget = "localhost:50071"
+        if (logTarget.isNullOrEmpty()) logTarget = "localhost:50081"
     }
 
     private val planetChannel = ManagedChannelBuilder
@@ -50,21 +52,34 @@ class DeathStarServiceImpl : DeathStarServiceGrpcKt.DeathStarServiceImplBase() {
     @ExperimentalCoroutinesApi
     override suspend fun destroy(requests: ReceiveChannel<PlanetProto.DestroyPlanetRequest>): ReceiveChannel<PlanetProto.Planets> {
         val channel = Channel<PlanetProto.Planets>()
-        channel.send(planetStub.getAllPlanets(Empty.getDefaultInstance()))
-        for (request in requests) {
-            planetStub.removePlanet(PlanetServiceProto.RemovePlanetRequest
-                    .newBuilder()
-                    .setPlanetId(request.planetId)
-                    .build())
-            scoreStub.addScore(ScoreServiceProto.AddScoreRequest
-                    .newBuilder()
-                    .setUserId(request.userId)
-                    .setToAdd(request.weight)
-                    .build())
-            logStub.destroyedPlanet(request)
-            val newPlanet = planetStub.generateNewPlanet(Empty.getDefaultInstance())
-            logStub.newPlanet(newPlanet)
-            listeners.forEach { it.send(planetStub.getAllPlanets(Empty.getDefaultInstance())) }
+        println("Sending all planets")
+        GlobalScope.launch {
+            channel.send(planetStub.getAllPlanets(Empty.getDefaultInstance()))
+            println("Sent all planets")
+        }
+
+        GlobalScope.launch {
+            while (true) {
+                val request = requests.receive()
+                planetStub.removePlanet(PlanetServiceProto.RemovePlanetRequest
+                        .newBuilder()
+                        .setPlanetId(request.planetId)
+                        .build())
+                scoreStub.addScore(ScoreServiceProto.AddScoreRequest
+                        .newBuilder()
+                        .setUserId(request.userId)
+                        .setToAdd(request.weight)
+                        .build())
+                logStub.destroyedPlanet(request)
+                val newPlanet = planetStub.generateNewPlanet(Empty.getDefaultInstance())
+                logStub.newPlanet(newPlanet)
+                listeners.forEach {
+                    GlobalScope.launch {
+                        it.send(planetStub.getAllPlanets(Empty.getDefaultInstance()))
+                        println("Sent all planets")
+                    }
+                }
+            }
         }
         return channel
     }

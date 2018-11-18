@@ -8,8 +8,11 @@ import com.zaxxer.hikari.HikariDataSource
 
 object PlanetRepo {
 
-        init {
-//            HikariCP.default("dbc:mysql://192.168.0.102:3306/death_star_db",
+    private val planetsList = mutableMapOf<Long, Planet>()
+
+    init {
+
+//            HikariCP.default("dbc:mysql://localhost:3306/death_star_db",
 //                    "root", "test")
 //
 //            using(session(HikariCP.dataSource())) { session ->
@@ -17,22 +20,32 @@ object PlanetRepo {
 //            }
 //
 //            val config = HikariConfig()
-//            config.jdbcUrl = "jdbc:mysql://192.168.0.102:3306/death_star_db"
+//            config.jdbcUrl = "jdbc:mysql://localhost:3306/death_star_db"
 //            config.driverClassName = "com.mysql.jdbc.Driver"
 //            config.isAutoCommit = false
 //            config.username = "root"
 //            config.password = "test"
 //            val ds = HikariDataSource(config)
 //            sqlClient = JDBCClient(ds)
-        }
+    }
+
+    fun initialPlanets() {
+        println("Generating initial planets")
+        for (i in 1..60)
+            planetsList[i + 500L] = Planet(i + 500L, randomName(), randomWeight())
+
+        planetsList.values.forEach { println("Generated ${it.name}") }
+    }
 
 
-    private val planetsList = mutableMapOf<Long,Planet>()
-
-    fun getAllPlanets() = planetsList.values.filter { it.isAlive }
+    fun getAllPlanets() : List<Planet> {
+        println("Inside repo")
+        return planetsList.values.filter { it.isAlive }
+    }
     fun deletePlanet(id: Long) = planetsList[id]?.let {
         planetsList[id] = it.copy(isAlive = false)
     }
+
     fun insertPlanet(planet: Planet) = planetsList.putIfAbsent(planet.id, planet)
 
     val names = listOf("Abafar", "Ahch-To", "Akiva", "Alderaan", "Ando", "Anoat", "Atollon", "Batuu", "Bespin",

@@ -1,15 +1,16 @@
 package ua.nedz.demo
 
 import com.google.protobuf.Empty
-import ua.nedz.grpc.PlanetServiceProto
 import ua.nedz.grpc.PlanetProto
 import ua.nedz.grpc.PlanetServiceGrpcKt
+import ua.nedz.grpc.PlanetServiceProto
 import java.util.concurrent.atomic.AtomicLong
-import kotlin.random.Random
-import kotlin.random.nextInt
 
 class PlanetServiceImpl : PlanetServiceGrpcKt.PlanetServiceImplBase() {
     private val counter = AtomicLong(1000L)
+    init {
+        PlanetRepo.initialPlanets()
+    }
 
     override suspend fun generateNewPlanet(request: Empty): PlanetProto.Planet {
         val planet = Planet(counter.incrementAndGet(), randomName(), randomWeight())
@@ -22,30 +23,20 @@ class PlanetServiceImpl : PlanetServiceGrpcKt.PlanetServiceImplBase() {
                 .build()
     }
 
-    private fun randomName() = PlanetRepo.names[Random.nextInt(1..PlanetRepo.names.size) - 1]
+    override suspend fun getAllPlanets(request: Empty): PlanetProto.Planets {
+        println("Inside get all planets")
 
-    private fun randomWeight(): Long =
-            when (Random.nextInt(0..100)) {
-                in 0..4 -> 500
-                in 5..14 -> 200
-                in 15..29 -> 100
-                in 30..49 -> 50
-                in 50..74 -> 20
-                in 75..100 -> 10
-                else -> 0
-            }
-
-    override suspend fun getAllPlanets(request: Empty): PlanetProto.Planets =
-            PlanetProto.Planets.newBuilder().addAllPlanets(
-                    PlanetRepo.getAllPlanets().map {
-                        PlanetProto.Planet
-                                .newBuilder()
-                                .setPlanetId(it.id)
-                                .setName(it.name)
-                                .setWeight(it.weight)
-                                .build()
-                    })
-                    .build()
+        return PlanetProto.Planets.newBuilder().addAllPlanets(
+                PlanetRepo.getAllPlanets().map {
+                    PlanetProto.Planet
+                            .newBuilder()
+                            .setPlanetId(it.id)
+                            .setName(it.name)
+                            .setWeight(it.weight)
+                            .build()
+                })
+                .build()
+    }
 
     override suspend fun removePlanet(request: PlanetServiceProto.RemovePlanetRequest): PlanetServiceProto.RemovePlanetResponse {
         PlanetRepo.deletePlanet(request.planetId)
