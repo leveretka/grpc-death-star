@@ -31,8 +31,11 @@ class DeathStarPage : VerticalLayout(), View {
 
     init {
 
+        addStyleName("death-star")
+
         logo = Image("", FileResource(File("$basePath/WEB-INF/images/GrpcDeathStarLogo.png")))
         logo.setWidth("330px")
+        logo.addStyleName("logo")
 
         with(services) {
             addComponents(scoresTable, logsArea)
@@ -70,6 +73,7 @@ class DeathStarPage : VerticalLayout(), View {
             while (true) {
                 println("Inside launched planets coroutine")
                 val planetsInGame = planets.receive()
+
                 current.access { game.removeAllComponents() }
                 planetsInGame.planetsList.forEach { planet ->
                     println("received planet")
@@ -78,18 +82,24 @@ class DeathStarPage : VerticalLayout(), View {
                     planetImg.description = planet.name
                     planetImg.caption = "${planet.weight}"
                     planetImg.addClickListener {
-                        val curUser = VaadinSession.getCurrent().getAttribute("user").toString()
-                        GlobalScope.launch {
-                            planets.send(PlanetProto.DestroyPlanetRequest.newBuilder()
-                                    .setUserName(curUser)
-                                    .setPlanetId(planet.planetId)
-                                    .setWeight(planet.weight)
-                                    .build())
+                        if (client.succesfulDestroyAttempt(planet)) {
+                            val curUser = VaadinSession.getCurrent().getAttribute("user").toString()
+
+                            GlobalScope.launch {
+                                planets.send(PlanetProto.DestroyPlanetRequest.newBuilder()
+                                        .setUserName(curUser)
+                                        .setPlanetId(planet.planetId)
+                                        .setWeight(planet.weight)
+                                        .build())
+                            }
                         }
                     }
                     current.access {
-                        planetImg.setWidth("60px")
-                        game.addComponent(planetImg)
+                        with(planetImg) {
+                            setWidth("60px")
+                            styleName = "planet-img"
+                            game.addComponent(this)
+                        }
                     }
                 }
             }

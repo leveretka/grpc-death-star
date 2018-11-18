@@ -14,7 +14,6 @@ class ScoreServiceImpl: ScoreServiceGrpcKt.ScoreServiceImplBase() {
     private val scoresMap = mutableMapOf<String, Long>()
     private val listeners = mutableListOf<Channel<ScoreServiceProto.ScoresResponse>>()
 
-
     override suspend fun addScore(request: ScoreServiceProto.AddScoreRequest): Empty {
         scoresMap.putIfAbsent(request.userName, 0)
         scoresMap[request.userName]?.let {
@@ -26,7 +25,7 @@ class ScoreServiceImpl: ScoreServiceGrpcKt.ScoreServiceImplBase() {
 
     private fun notifyListeners(vararg listeners: Channel<ScoreServiceProto.ScoresResponse>) {
         val allScores = ScoreServiceProto.ScoresResponse.newBuilder()
-                .addAllScores(scoresMap.entries.map { (id, score) ->
+                .addAllScores(scoresMap.entries.sortedByDescending { it.value }.map { (id, score) ->
                     ScoreServiceProto.Score.newBuilder()
                             .setUserName(id)
                             .setScore(score)

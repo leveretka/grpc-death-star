@@ -6,6 +6,8 @@ import io.grpc.internal.DnsNameResolverProvider
 import io.grpc.util.RoundRobinLoadBalancerFactory
 import kotlinx.coroutines.channels.ReceiveChannel
 import ua.nedz.grpc.*
+import kotlin.random.Random
+import kotlin.random.nextInt
 
 class DeathStarClient {
 
@@ -60,5 +62,10 @@ class DeathStarClient {
             val logStream: ReceiveChannel<LogServiceProto.Log>,
             val scoresStream: ReceiveChannel<ScoreServiceProto.ScoresResponse>
     )
+
+    fun succesfulDestroyAttempt(p: PlanetProto.Planet): Boolean {
+        val probabilty = Math.min(50, 5000 / p.weight)
+        return Random.nextInt(0..100) < probabilty
+    }
 
 }

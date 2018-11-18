@@ -4,6 +4,7 @@ package com.example.deathstarclient
 
 import com.vaadin.annotations.PreserveOnRefresh
 import com.vaadin.annotations.Push
+import com.vaadin.annotations.StyleSheet
 import com.vaadin.annotations.Theme
 import com.vaadin.navigator.Navigator
 import com.vaadin.server.Page
@@ -16,6 +17,7 @@ import com.vaadin.ui.UI
 @Theme("DeathStarClient")
 @Push(transport = Transport.LONG_POLLING)
 @PreserveOnRefresh
+@StyleSheet("https://fonts.googleapis.com/css?family=Permanent+Marker")
 class MainUI : UI() {
     override fun init(request: VaadinRequest?) {
         Navigator(this, this)
