@@ -61,7 +61,7 @@ compileTestKotlin {
 jar {
     manifest {
         attributes(
-                'Main-Class': 'ua.nedz.demo.DeathStarServerKt'
+                'Main-Class': 'ua.nedz.demo.PlanetServerKt'
         )
     }
 }

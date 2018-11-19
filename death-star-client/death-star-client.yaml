@@ -1,0 +1,44 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  labels:
+    run: death-star-client
+  name: death-star-client
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      run: death-star-client
+  template:
+    metadata:
+      labels:
+        run: death-star-client
+    spec:
+      containers:
+      - name: death-star-client
+        image: gcr.io/death-star-222921/death-star-client:v1
+        env:
+        - name: DEATH_STAR_SERVICE_TARGET
+          value: dns:///death-star-service:50051
+        - name: SCORE_SERVICE_TARGET
+          value: dns:///score-service:50071
+        - name: LOG_SERVICE_TARGET
+          value: dns:///log-service:50081
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    run: death-star-client
+  name: death-star-client
+spec:
+#  clusterIP: None
+  ports:
+  - name: http
+    port: 8080
+    protocol: TCP
+    targetPort: 8080
+  selector:
+    run: death-star-client
+  type: LoadBalancer
+  #loadBalancerIP: "104.197.77.39"

@@ -1,0 +1,42 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  labels:
+    run: death-star-service
+  name: death-star-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      run: death-star-service
+  template:
+    metadata:
+      labels:
+        run: death-star-service
+    spec:
+      containers:
+      - name: death-star-service
+        image: gcr.io/death-star-222921/death-star-service:v1
+        env:
+        - name: PLANET_SERVICE_TARGET
+          value: dns:///planet-service:50061
+        - name: SCORE_SERVICE_TARGET
+          value: dns:///score-service:50071
+        - name: LOG_SERVICE_TARGET
+          value: dns:///log-service:50081
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    run: death-star-service
+  name: death-star-service
+spec:
+  ports:
+  - name: grpc
+    port: 50051
+    protocol: TCP
+    targetPort: 50051
+  selector:
+    run: death-star-service
+  type: LoadBalancer

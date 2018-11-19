@@ -1,0 +1,30 @@
+@import "../valo/valo.scss";
+
+@-moz-keyframes spin { 100% { -moz-transform: rotate(360deg); } }
+@-webkit-keyframes spin { 100% { -webkit-transform: rotate(360deg); } }
+@keyframes spin { 100% { -webkit-transform: rotate(360deg); transform:rotate(360deg); } }
+
+@mixin deathstarclient {
+	@include valo;
+	.game {
+		background-image: url('images/farback.gif');
+		color: #555555;
+	}
+
+	.logo {
+		border-radius: 100%;
+	}
+
+	.death-star {
+		font-family: 'Permanent Marker', cursive;
+		background-color: #191919;
+		color: white;
+	}
+
+	.planet-img {
+		position: absolute;
+		-webkit-animation:spin 4s linear infinite;
+		-moz-animation:spin 4s linear infinite;
+		animation:spin 4s linear infinite;
+	}
+}

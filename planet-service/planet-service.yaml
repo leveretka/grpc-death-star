@@ -1,0 +1,36 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  labels:
+    run: planet-service
+  name: planet-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      run: planet-service
+  template:
+    metadata:
+      labels:
+        run: planet-service
+    spec:
+      containers:
+      - name: planet-service
+        image: gcr.io/death-star-222921/planet-service:v1.1
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    run: planet-service
+  name: planet-service
+spec:
+  ports:
+  - name: grpc
+    port: 50061
+    protocol: TCP
+    targetPort: 50061
+  selector:
+    run: planet-service
+  type: LoadBalancer

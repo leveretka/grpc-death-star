@@ -1,0 +1,7 @@
+@import "../valo/valo.scss";
+
+@mixin death-star-client {
+	@include valo;
+
+	/* Add your theme selectors here */
+}
