@@ -4,7 +4,6 @@ import com.google.protobuf.Empty
 import io.grpc.ManagedChannelBuilder
 import io.grpc.internal.DnsNameResolverProvider
 import io.grpc.util.RoundRobinLoadBalancerFactory
-import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.ReceiveChannel
@@ -51,7 +50,7 @@ class LogServiceImpl: LogServiceImplBase(coroutineContext = newFixedThreadPool(4
 
     private suspend fun notifyUsers(message: String) =
         listeners.forEach {
-            GlobalScope.launch {
+            launch {
                 it.send(LogServiceProto.Log.newBuilder()
                         .setMessage(message)
                         .build())

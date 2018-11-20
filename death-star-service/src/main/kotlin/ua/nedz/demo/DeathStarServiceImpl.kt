@@ -6,7 +6,6 @@ import io.grpc.ManagedChannelBuilder
 import io.grpc.internal.DnsNameResolverProvider
 import io.grpc.util.RoundRobinLoadBalancerFactory
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.ReceiveChannel
@@ -36,12 +35,10 @@ class DeathStarServiceImpl : DeathStarServiceImplBase(coroutineContext = Executo
         val channel = Channel<PlanetProto.Planets>()
         listeners.add(channel)
         println("Sending all planets")
-        GlobalScope.launch {
+        launch {
             channel.send(planetStub.getAllPlanets(Empty.getDefaultInstance()))
             println("Sent all planets")
-        }
 
-        GlobalScope.launch {
             for (request in requests) {
                 planetStub.removePlanet(RemovePlanetRequest {planetId = request.planetId})
                 scoreStub.addScore(AddScoreRequest {
