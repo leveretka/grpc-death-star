@@ -25,11 +25,11 @@ class ScoreServiceImpl: ScoreServiceGrpcKt.ScoreServiceImplBase() {
 
     private fun notifyListeners(vararg listeners: Channel<ScoreServiceProto.ScoresResponse>) {
         val allScores = ScoreServiceProto.ScoresResponse.newBuilder()
-                .addAllScores(scoresMap.entries.sortedByDescending { it.value }.map { (id, score) ->
-                    ScoreServiceProto.Score.newBuilder()
-                            .setUserName(id)
-                            .setScore(score)
-                            .build()
+                .addAllScores(scoresMap.entries.sortedByDescending { it.value }.map { (id, value) ->
+                    Score {
+                        userName = id
+                        score = value
+                    }
                 })
                 .build()
 
@@ -45,5 +45,10 @@ class ScoreServiceImpl: ScoreServiceGrpcKt.ScoreServiceImplBase() {
         notifyListeners(channel)
         return channel
     }
+
+    private fun Score(init: ScoreServiceProto.Score.Builder.() -> Unit) =
+            ScoreServiceProto.Score.newBuilder()
+                    .apply(init)
+                    .build()
 
 }

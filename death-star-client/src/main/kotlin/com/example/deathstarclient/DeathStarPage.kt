@@ -7,8 +7,11 @@ import com.vaadin.server.VaadinService
 import com.vaadin.server.VaadinSession
 import com.vaadin.ui.*
 import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.launch
+import ua.nedz.grpc.DeathStarServiceGrpcKt
 import ua.nedz.grpc.PlanetProto
+import ua.nedz.grpc.ScoreServiceProto
 import java.io.File
 
 
@@ -30,12 +33,13 @@ class DeathStarPage : VerticalLayout(), View {
     private val basePath = VaadinService.getCurrent().baseDirectory.absolutePath
 
     init {
-
         addStyleName("death-star")
 
         logo = Image("", FileResource(File("$basePath/WEB-INF/images/GrpcDeathStarLogo.png")))
-        logo.setWidth("330px")
-        logo.addStyleName("logo")
+        with(logo) {
+            setWidth("330px")
+            addStyleName("logo")
+        }
 
         with(services) {
             addComponents(scoresTable, logsArea)
@@ -61,7 +65,6 @@ class DeathStarPage : VerticalLayout(), View {
     override fun enter(event: ViewChangeEvent?) {
         userName = VaadinSession.getCurrent().getAttribute("user").toString()
         defaultComponentAlignment = Alignment.TOP_CENTER
-
         addComponents(logo, game, services)
 
         val (planets, logs, scores)
@@ -70,60 +73,57 @@ class DeathStarPage : VerticalLayout(), View {
         val current = UI.getCurrent()
 
         GlobalScope.launch {
-            while (true) {
-                println("Inside launched planets coroutine")
-                val planetsInGame = planets.receive()
+            receivePlanets(planets, current)
+        }
+        GlobalScope.launch {
+            for (log in logs)
+                current.access { logsArea.value += "${log.message}\n" }
+        }
+        GlobalScope.launch {
+            receiveScores(scores, current)
+        }
+    }
 
-                current.access { game.removeAllComponents() }
-                planetsInGame.planetsList.forEach { planet ->
-                    println("received planet")
-                    val planetImg = Image("", FileResource(File(
-                            "$basePath/WEB-INF/images/planets/planet${planet.img}.png")))
-                    planetImg.description = planet.name
-                    planetImg.caption = "${planet.weight}"
-                    planetImg.addClickListener {
+    private suspend fun receiveScores(scores: ReceiveChannel<ScoreServiceProto.ScoresResponse>, current: UI) {
+        for (scoresResponse in scores) {
+            current.access {
+                with(scoresTable) {
+                    removeAllComponents()
+                    addComponents(Label("User"), Label("Score"))
+                    scoresResponse.scoresList.forEach { addComponents(Label(it.userName), Label("${it.score}")) }
+                }
+            }
+        }
+    }
+
+    private suspend fun receivePlanets(planets: DeathStarServiceGrpcKt.ManyToManyCall<PlanetProto.DestroyPlanetRequest, PlanetProto.Planets>, current: UI) {
+        for (planetsInGame in planets) {
+            current.access { game.removeAllComponents() }
+            planetsInGame.planetsList.forEach { planet ->
+                val planetImg = Image("", FileResource(File(
+                        "$basePath/WEB-INF/images/planets/planet${planet.img}.png")))
+                with(planetImg) {
+                    description = planet.name
+                    caption = "${planet.weight}"
+                    current.access {
+                        setWidth("60px")
+                        styleName = "planet-img"
+                        game.addComponent(this)
+                    }
+                    addClickListener {
                         if (client.succesfulDestroyAttempt(planet)) {
                             val curUser = VaadinSession.getCurrent().getAttribute("user").toString()
-
                             GlobalScope.launch {
-                                planets.send(PlanetProto.DestroyPlanetRequest.newBuilder()
-                                        .setUserName(curUser)
-                                        .setPlanetId(planet.planetId)
-                                        .setWeight(planet.weight)
-                                        .build())
+                                planets.send(DestroyPlanetRequest {
+                                    userName = curUser
+                                    planetId = planet.planetId
+                                    weight = planet.weight
+                                })
                             }
                         }
                     }
-                    current.access {
-                        with(planetImg) {
-                            setWidth("60px")
-                            styleName = "planet-img"
-                            game.addComponent(this)
-                        }
-                    }
                 }
-            }
-        }
 
-        GlobalScope.launch {
-            while (true) {
-                val log = logs.receive()
-                current.access {
-                    logsArea.value += "${log.message}\n"
-                }
-            }
-        }
-
-        GlobalScope.launch {
-            while (true) {
-                val scoresResponse = scores.receive()
-                current.access {
-                    scoresTable.removeAllComponents()
-                    scoresTable.addComponents(Label("User"), Label("Score"))
-                    scoresResponse.scoresList.forEach {
-                        scoresTable.addComponents(Label(it.userName), Label("${it.score}"))
-                    }
-                }
             }
         }
     }
@@ -133,5 +133,10 @@ class DeathStarPage : VerticalLayout(), View {
         setHeight("100%")
         defaultComponentAlignment = Alignment.MIDDLE_CENTER
     }
+
+    private fun DestroyPlanetRequest(init: PlanetProto.DestroyPlanetRequest.Builder.() -> Unit) =
+        PlanetProto.DestroyPlanetRequest.newBuilder()
+                .apply(init)
+                .build()
 
 }

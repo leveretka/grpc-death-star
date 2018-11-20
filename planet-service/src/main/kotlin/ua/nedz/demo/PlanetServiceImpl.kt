@@ -15,13 +15,7 @@ class PlanetServiceImpl : PlanetServiceGrpcKt.PlanetServiceImplBase() {
     override suspend fun generateNewPlanet(request: Empty): PlanetProto.Planet {
         val planet = Planet(counter.incrementAndGet(), randomName(), randomWeight(), randomImg())
         PlanetRepo.insertPlanet(planet)
-        return PlanetProto.Planet
-                .newBuilder()
-                .setPlanetId(planet.id)
-                .setName(planet.name)
-                .setWeight(planet.weight)
-                .setImg(planet.img)
-                .build()
+        return Planet(planet)
     }
 
     override suspend fun getAllPlanets(request: Empty): PlanetProto.Planets {
@@ -29,13 +23,7 @@ class PlanetServiceImpl : PlanetServiceGrpcKt.PlanetServiceImplBase() {
 
         return PlanetProto.Planets.newBuilder().addAllPlanets(
                 PlanetRepo.getAllPlanets().map {
-                    PlanetProto.Planet
-                            .newBuilder()
-                            .setPlanetId(it.id)
-                            .setName(it.name)
-                            .setWeight(it.weight)
-                            .setImg(it.img)
-                            .build()
+                    Planet(it)
                 })
                 .build()
     }
@@ -47,14 +35,23 @@ class PlanetServiceImpl : PlanetServiceGrpcKt.PlanetServiceImplBase() {
 
     override suspend fun getPlanetById(request: PlanetServiceProto.GetPlanetRequest): PlanetProto.Planet {
         PlanetRepo.getPlanetById(request.planetId)?.let {
-            return PlanetProto.Planet.newBuilder()
-                    .setPlanetId(it.id)
-                    .setName(it.name)
-                    .setWeight(it.weight)
-                    .setImg(it.img)
-                    .build()
+            return Planet(it)
         }
         throw PlanetNotFoundException(request.planetId)
     }
+
+    private fun Planet(p: Planet): PlanetProto.Planet {
+        return Planet {
+            planetId = p.id
+            name = p.name
+            weight = p.weight
+            img = p.img
+        }
+    }
+
+    private fun Planet(init: PlanetProto.Planet.Builder.() -> Unit) =
+            PlanetProto.Planet.newBuilder()
+                    .apply(init)
+                    .build()
 
 }

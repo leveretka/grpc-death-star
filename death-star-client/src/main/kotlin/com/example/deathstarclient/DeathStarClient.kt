@@ -1,6 +1,7 @@
 package com.example.deathstarclient
 
 import com.google.protobuf.Empty
+import io.grpc.ManagedChannel
 import io.grpc.ManagedChannelBuilder
 import io.grpc.internal.DnsNameResolverProvider
 import io.grpc.util.RoundRobinLoadBalancerFactory
@@ -11,40 +12,18 @@ import kotlin.random.nextInt
 
 class DeathStarClient {
 
-    private var deathStarTarget: String? = System.getenv("DEATH_STAR_SERVICE_TARGET")
-    private var scoreTarget: String? = System.getenv("SCORE_SERVICE_TARGET")
-    private var logTarget: String? = System.getenv("LOG_SERVICE_TARGET")
+    private var deathStarTarget: String = System.getenv("DEATH_STAR_SERVICE_TARGET") ?: "localhost:50061"
+    private var scoreTarget: String = System.getenv("SCORE_SERVICE_TARGET") ?: "localhost:50071"
+    private var logTarget: String = System.getenv("LOG_SERVICE_TARGET") ?: "localhost:50081"
 
-    init {
-        if (deathStarTarget.isNullOrEmpty()) deathStarTarget = "localhost:50051"
-        if (scoreTarget.isNullOrEmpty()) scoreTarget = "localhost:50071"
-        if (logTarget.isNullOrEmpty()) logTarget = "localhost:50081"
-    }
-
-    private val deathStarChannel = ManagedChannelBuilder
-            .forTarget(deathStarTarget)
-            .nameResolverFactory(DnsNameResolverProvider())
-            .loadBalancerFactory(RoundRobinLoadBalancerFactory.getInstance())
-            .usePlaintext(true)
-            .build()
+    private val deathStarChannel = channelForTarget(deathStarTarget)
     private val deathStarStub = DeathStarServiceGrpcKt.newStub(deathStarChannel)
 
-    private val scoreChannel = ManagedChannelBuilder
-            .forTarget(scoreTarget)
-            .nameResolverFactory(DnsNameResolverProvider())
-            .loadBalancerFactory(RoundRobinLoadBalancerFactory.getInstance())
-            .usePlaintext(true)
-            .build()
+    private val scoreChannel = channelForTarget(scoreTarget)
     private val scoreStub = ScoreServiceGrpcKt.newStub(scoreChannel)
 
-    private val logChannel = ManagedChannelBuilder
-            .forTarget(logTarget)
-            .nameResolverFactory(DnsNameResolverProvider())
-            .loadBalancerFactory(RoundRobinLoadBalancerFactory.getInstance())
-            .usePlaintext(true)
-            .build()
+    private val logChannel = channelForTarget(logTarget)
     private val logStub = LogServiceGrpcKt.newStub(logChannel)
-
 
     fun join(userName: String): JoinResult {
         println("Inside Join")
@@ -68,4 +47,12 @@ class DeathStarClient {
         return Random.nextInt(0..100) < probabilty
     }
 
+    private fun channelForTarget(target: String): ManagedChannel {
+        return ManagedChannelBuilder
+                .forTarget(target)
+                .nameResolverFactory(DnsNameResolverProvider())
+                .loadBalancerFactory(RoundRobinLoadBalancerFactory.getInstance())
+                .usePlaintext(true)
+                .build()
+    }
 }
