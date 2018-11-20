@@ -53,7 +53,7 @@ class DeathStarClient {
                 .forTarget(target)
                 .nameResolverFactory(DnsNameResolverProvider())
                 .loadBalancerFactory(RoundRobinLoadBalancerFactory.getInstance())
-                .usePlaintext(true)
+                .usePlaintext()
                 .build()
     }
 }

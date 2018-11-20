@@ -24,7 +24,7 @@ class LogServiceImpl: LogServiceImplBase(coroutineContext = newFixedThreadPool(4
             .forTarget(planetTarget)
             .nameResolverFactory(DnsNameResolverProvider())
             .loadBalancerFactory(RoundRobinLoadBalancerFactory.getInstance())
-            .usePlaintext(true)
+            .usePlaintext()
             .build()
     private val planetStub = PlanetServiceGrpc.newStub(planetChannel)
 
