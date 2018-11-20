@@ -14,11 +14,7 @@ import java.util.concurrent.Executors.newFixedThreadPool
 class LogServiceImpl: LogServiceImplBase(coroutineContext = newFixedThreadPool(4).asCoroutineDispatcher()) {
     private val listeners = mutableListOf<Channel<LogServiceProto.Log>>()
 
-    private var planetTarget: String? = System.getenv("PLANET_SERVICE_TARGET")
-
-    init {
-        if (planetTarget.isNullOrEmpty()) planetTarget = "localhost:50061"
-    }
+    private var planetTarget: String = System.getenv("PLANET_SERVICE_TARGET") ?: "localhost:50061"
 
     private val planetChannel = ManagedChannelBuilder
             .forTarget(planetTarget)
