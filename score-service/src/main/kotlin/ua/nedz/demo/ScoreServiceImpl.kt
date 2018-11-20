@@ -3,13 +3,15 @@ package ua.nedz.demo
 import com.google.protobuf.Empty
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.launch
-import ua.nedz.grpc.ScoreServiceGrpcKt
+import ua.nedz.grpc.ScoreServiceImplBase
 import ua.nedz.grpc.ScoreServiceProto
+import java.util.concurrent.Executors
 
-class ScoreServiceImpl: ScoreServiceGrpcKt.ScoreServiceImplBase() {
+class ScoreServiceImpl: ScoreServiceImplBase(coroutineContext = Executors.newFixedThreadPool(4).asCoroutineDispatcher()) {
 
     private val scoresMap = mutableMapOf<String, Long>()
     private val listeners = mutableListOf<Channel<ScoreServiceProto.ScoresResponse>>()

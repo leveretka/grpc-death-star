@@ -7,12 +7,14 @@ import io.grpc.internal.DnsNameResolverProvider
 import io.grpc.util.RoundRobinLoadBalancerFactory
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.launch
 import ua.nedz.grpc.*
+import java.util.concurrent.Executors
 
-class DeathStarServiceImpl : DeathStarServiceGrpcKt.DeathStarServiceImplBase() {
+class DeathStarServiceImpl : DeathStarServiceImplBase(coroutineContext = Executors.newFixedThreadPool(4).asCoroutineDispatcher()) {
 
     private val listeners = mutableListOf<Channel<PlanetProto.Planets>>()
 
@@ -21,13 +23,13 @@ class DeathStarServiceImpl : DeathStarServiceGrpcKt.DeathStarServiceImplBase() {
     private var logTarget: String = System.getenv("LOG_SERVICE_TARGET") ?: "localhost:50081"
 
     private val planetChannel = channelForTarget(planetTarget)
-    private val planetStub = PlanetServiceGrpcKt.newStub(planetChannel)
+    private val planetStub = PlanetServiceGrpc.newStub(planetChannel)
 
     private val scoreChannel = channelForTarget(scoreTarget)
-    private val scoreStub = ScoreServiceGrpcKt.newStub(scoreChannel)
+    private val scoreStub = ScoreServiceGrpc.newStub(scoreChannel)
 
     private val logChannel = channelForTarget(logTarget)
-    private val logStub = LogServiceGrpcKt.newStub(logChannel)
+    private val logStub = LogServiceGrpc.newStub(logChannel)
 
     @ExperimentalCoroutinesApi
     override suspend fun destroy(requests: ReceiveChannel<PlanetProto.DestroyPlanetRequest>): ReceiveChannel<PlanetProto.Planets> {

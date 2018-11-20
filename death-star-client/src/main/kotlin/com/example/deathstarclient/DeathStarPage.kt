@@ -6,10 +6,10 @@ import com.vaadin.server.FileResource
 import com.vaadin.server.VaadinService
 import com.vaadin.server.VaadinSession
 import com.vaadin.ui.*
+import io.rouz.grpc.ManyToManyCall
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.launch
-import ua.nedz.grpc.DeathStarServiceGrpcKt
 import ua.nedz.grpc.PlanetProto
 import ua.nedz.grpc.ScoreServiceProto
 import java.io.File
@@ -96,7 +96,7 @@ class DeathStarPage : VerticalLayout(), View {
         }
     }
 
-    private suspend fun receivePlanets(planets: DeathStarServiceGrpcKt.ManyToManyCall<PlanetProto.DestroyPlanetRequest, PlanetProto.Planets>, current: UI) {
+    private suspend fun receivePlanets(planets: ManyToManyCall<PlanetProto.DestroyPlanetRequest, PlanetProto.Planets>, current: UI) {
         for (planetsInGame in planets) {
             current.access { game.removeAllComponents() }
             planetsInGame.planetsList.forEach { planet ->
@@ -109,16 +109,16 @@ class DeathStarPage : VerticalLayout(), View {
                         setWidth("60px")
                         styleName = "planet-img"
                         game.addComponent(this)
-                    }
-                    addClickListener {
-                        if (client.succesfulDestroyAttempt(planet)) {
-                            val curUser = VaadinSession.getCurrent().getAttribute("user").toString()
-                            GlobalScope.launch {
-                                planets.send(DestroyPlanetRequest {
-                                    userName = curUser
-                                    planetId = planet.planetId
-                                    weight = planet.weight
-                                })
+                        addClickListener {
+                            if (client.succesfulDestroyAttempt(planet)) {
+                                val curUser = VaadinSession.getCurrent().getAttribute("user").toString()
+                                GlobalScope.launch {
+                                    planets.send(DestroyPlanetRequest {
+                                        userName = curUser
+                                        planetId = planet.planetId
+                                        weight = planet.weight
+                                    })
+                                }
                             }
                         }
                     }

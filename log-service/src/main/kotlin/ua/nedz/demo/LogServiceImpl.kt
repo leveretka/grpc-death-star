@@ -5,12 +5,14 @@ import io.grpc.ManagedChannelBuilder
 import io.grpc.internal.DnsNameResolverProvider
 import io.grpc.util.RoundRobinLoadBalancerFactory
 import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.launch
 import ua.nedz.grpc.*
+import java.util.concurrent.Executors.newFixedThreadPool
 
-class LogServiceImpl: LogServiceGrpcKt.LogServiceImplBase() {
+class LogServiceImpl: LogServiceImplBase(coroutineContext = newFixedThreadPool(4).asCoroutineDispatcher()) {
     private val listeners = mutableListOf<Channel<LogServiceProto.Log>>()
 
     private var planetTarget: String? = System.getenv("PLANET_SERVICE_TARGET")
@@ -25,7 +27,7 @@ class LogServiceImpl: LogServiceGrpcKt.LogServiceImplBase() {
             .loadBalancerFactory(RoundRobinLoadBalancerFactory.getInstance())
             .usePlaintext(true)
             .build()
-    private val planetStub = PlanetServiceGrpcKt.newStub(planetChannel)
+    private val planetStub = PlanetServiceGrpc.newStub(planetChannel)
 
     override suspend fun newPlanet(request: PlanetProto.Planet): Empty {
         notifyUsers("Planet ${request.name} was born.")
