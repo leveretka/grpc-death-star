@@ -4,7 +4,6 @@ import com.google.protobuf.Empty
 import io.grpc.ManagedChannelBuilder
 import io.grpc.internal.DnsNameResolverProvider
 import io.grpc.util.RoundRobinLoadBalancerFactory
-import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.ReceiveChannel
@@ -15,17 +14,13 @@ import java.util.concurrent.Executors.newFixedThreadPool
 class LogServiceImpl: LogServiceImplBase(coroutineContext = newFixedThreadPool(4).asCoroutineDispatcher()) {
     private val listeners = mutableListOf<Channel<LogServiceProto.Log>>()
 
-    private var planetTarget: String? = System.getenv("PLANET_SERVICE_TARGET")
-
-    init {
-        if (planetTarget.isNullOrEmpty()) planetTarget = "localhost:50061"
-    }
+    private var planetTarget: String = System.getenv("PLANET_SERVICE_TARGET") ?: "localhost:50061"
 
     private val planetChannel = ManagedChannelBuilder
             .forTarget(planetTarget)
             .nameResolverFactory(DnsNameResolverProvider())
             .loadBalancerFactory(RoundRobinLoadBalancerFactory.getInstance())
-            .usePlaintext(true)
+            .usePlaintext()
             .build()
     private val planetStub = PlanetServiceGrpc.newStub(planetChannel)
 
@@ -51,7 +46,7 @@ class LogServiceImpl: LogServiceImplBase(coroutineContext = newFixedThreadPool(4
 
     private suspend fun notifyUsers(message: String) =
         listeners.forEach {
-            GlobalScope.launch {
+            launch {
                 it.send(LogServiceProto.Log.newBuilder()
                         .setMessage(message)
                         .build())

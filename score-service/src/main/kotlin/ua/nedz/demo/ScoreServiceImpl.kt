@@ -2,7 +2,6 @@ package ua.nedz.demo
 
 import com.google.protobuf.Empty
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.ReceiveChannel
@@ -36,7 +35,7 @@ class ScoreServiceImpl: ScoreServiceImplBase(coroutineContext = Executors.newFix
                 .build()
 
         listeners.forEach {
-            GlobalScope.launch { it.send(allScores) }
+            launch { it.send(allScores) }
         }
     }
 
