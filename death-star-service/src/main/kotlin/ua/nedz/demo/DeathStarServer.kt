@@ -1,7 +1,9 @@
 package ua.nedz.demo
 
+import com.sun.corba.se.impl.logging.InterceptorsSystemException
 import io.grpc.Server
 import io.grpc.ServerBuilder
+import io.grpc.ServerInterceptors
 
 fun main(args: Array<String>) {
     val server = DeathStarServer()
@@ -14,7 +16,7 @@ class DeathStarServer (private val port: Int = 50051, private val serverBuilder:
 
     fun start() {
         server = serverBuilder
-                .addService(DeathStarServiceImpl())
+                .addService(ServerInterceptors.intercept(DeathStarServiceImpl(), UnknownStatusIntertceptor()))
                 .build()
                 .start()
         println("Server started!")
