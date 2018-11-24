@@ -1,6 +1,7 @@
 package com.example.deathstarclient
 
 import com.google.protobuf.Empty
+import io.grpc.ClientInterceptors
 import io.grpc.ManagedChannel
 import io.grpc.ManagedChannelBuilder
 import io.grpc.internal.DnsNameResolverProvider
@@ -17,7 +18,8 @@ class DeathStarClient {
     private var scoreTarget: String = System.getenv("SCORE_SERVICE_TARGET") ?: "localhost:50071"
     private var logTarget: String = System.getenv("LOG_SERVICE_TARGET") ?: "localhost:50081"
 
-    private val deathStarChannel = channelForTarget(deathStarTarget)
+    private val ch = channelForTarget(deathStarTarget)
+    private val deathStarChannel = ClientInterceptors.intercept(ch, HackTheSystemInterceptor())
     private val deathStarStub = DeathStarServiceGrpc.newStub(deathStarChannel)
 
     private val scoreChannel = channelForTarget(scoreTarget)
