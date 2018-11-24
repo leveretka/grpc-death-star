@@ -33,7 +33,7 @@ class LogServiceImpl: LogServiceImplBase(coroutineContext = newFixedThreadPool(4
         val planet = planetStub.getPlanetById(PlanetServiceProto.GetPlanetRequest.newBuilder()
                 .setPlanetId(request.planetId)
                 .build())
-        notifyUsers("User ${request.userName} destroted planet ${planet.name}!")
+        notifyUsers("User ${request.userName} destroyed planet ${planet.name}!")
         return Empty.getDefaultInstance()
     }
 
