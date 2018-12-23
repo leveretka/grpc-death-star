@@ -10,6 +10,12 @@ message Planet {
     string name = 2;
     int64 weight = 3;
     int32 img = 4;
+    Coordinates coordinates = 5;
+}
+
+message Coordinates {
+    int32 x = 1;
+    int32 y = 2;
 }
 
 message Planets {
@@ -20,4 +26,5 @@ message DestroyPlanetRequest {
     string userName = 1;
     int64 planetId = 2;
     int64 weight = 3;
+    Coordinates coordinates = 4;
 }

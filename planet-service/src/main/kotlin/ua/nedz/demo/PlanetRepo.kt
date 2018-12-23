@@ -1,8 +1,10 @@
 package ua.nedz.demo
 
+import java.util.concurrent.ConcurrentHashMap
+
 object PlanetRepo {
 
-    private val planetsList = mutableMapOf<Long, Planet>()
+    private val planetsList = ConcurrentHashMap<Long, Planet>()
 
     fun initialPlanets() {
         println("Generating initial planets")
@@ -16,10 +18,15 @@ object PlanetRepo {
 
     fun getAllPlanets() : List<Planet> {
         println("Inside repo")
-        return planetsList.values.filter { it.isAlive }
+        return planetsList.values.filter { it.isAlive.get() }
     }
-    fun deletePlanet(id: Long) = planetsList[id]?.let {
-        planetsList[id] = it.copy(isAlive = false)
+    fun deletePlanet(id: Long) : Boolean {
+        println("Inside Repo Remove planet")
+        println("Before: ${planetsList[id]}")
+        val planet = planetsList[id]
+        val result = planet?.isAlive?.compareAndSet(true, false) ?: false
+        println("After: ${planetsList[id]}")
+        return result
     }
 
     fun insertPlanet(planet: Planet) = planetsList.putIfAbsent(planet.id, planet)

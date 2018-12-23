@@ -31,8 +31,9 @@ class PlanetServiceImpl : PlanetServiceImplBase(coroutineContext = Executors.new
     }
 
     override suspend fun removePlanet(request: PlanetServiceProto.RemovePlanetRequest): PlanetServiceProto.RemovePlanetResponse {
-        PlanetRepo.deletePlanet(request.planetId)
-        return PlanetServiceProto.RemovePlanetResponse.newBuilder().setResult(true).build()
+        println("Before calling repo")
+        val result = PlanetRepo.deletePlanet(request.planetId)
+        return PlanetServiceProto.RemovePlanetResponse.newBuilder().setResult(result).build()
     }
 
     override suspend fun getPlanetById(request: PlanetServiceProto.GetPlanetRequest): PlanetProto.Planet {

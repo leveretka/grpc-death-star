@@ -1,9 +1,10 @@
 package ua.nedz.demo
 
+import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.random.Random
 import kotlin.random.nextInt
 
-data class Planet (val id: Long, val name: String, val weight: Long, val img: Int, var isAlive: Boolean = true)
+data class Planet (val id: Long, val name: String, val weight: Long, val img: Int, var isAlive: AtomicBoolean = AtomicBoolean(true))
 
 fun randomName() = PlanetRepo.names[Random.nextInt(1..PlanetRepo.names.size) - 1]
 

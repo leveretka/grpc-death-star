@@ -1,6 +1,5 @@
 package ua.nedz.demo
 
-import com.sun.corba.se.impl.logging.InterceptorsSystemException
 import io.grpc.Server
 import io.grpc.ServerBuilder
 import io.grpc.ServerInterceptors

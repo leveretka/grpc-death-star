@@ -4,12 +4,12 @@ import io.grpc.Server
 import io.grpc.ServerBuilder
 
 fun main(args: Array<String>) {
-    val server = LogSever()
+    val server = LogServer()
     server.start()
     server.blockUntilShutdown()
 }
 
-class LogSever (private val port: Int = 50081, private val serverBuilder: ServerBuilder<*> = ServerBuilder.forPort(port)) {
+class LogServer (private val port: Int = 50081, private val serverBuilder: ServerBuilder<*> = ServerBuilder.forPort(port)) {
     private lateinit var server: Server
 
     fun start() {

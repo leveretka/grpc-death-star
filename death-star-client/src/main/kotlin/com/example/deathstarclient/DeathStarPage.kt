@@ -98,7 +98,6 @@ class DeathStarPage : VerticalLayout(), View {
 
     private suspend fun receivePlanets(planets: ManyToManyCall<PlanetProto.DestroyPlanetRequest, PlanetProto.Planets>, current: UI) {
         for (planetsInGame in planets) {
-            current.access { game.removeAllComponents() }
             planetsInGame.planetsList.forEach { planet ->
                 val planetImg = Image("", FileResource(File(
                         "$basePath/WEB-INF/images/planets/planet${planet.img}.png")))
@@ -108,17 +107,23 @@ class DeathStarPage : VerticalLayout(), View {
                     current.access {
                         setWidth("60px")
                         styleName = "planet-img"
-                        game.addComponent(this)
+                        val x = planet.coordinates.x
+                        val y = planet.coordinates.y
+                        val oldComponent = game.getComponent(x, y)
+                        game.replaceComponent(oldComponent, this)
                         addClickListener {
                             if (client.succesfulDestroyAttempt(planet)) {
                                 val curUser = VaadinSession.getCurrent().getAttribute("user").toString()
-                                GlobalScope.launch {
-                                    planets.send(DestroyPlanetRequest {
-                                        userName = curUser
-                                        planetId = planet.planetId
-                                        weight = planet.weight
-                                    })
-                                }
+                                planets.send(DestroyPlanetRequest {
+                                    userName = curUser
+                                    planetId = planet.planetId
+                                    weight = planet.weight
+                                    coordinates = Coordinates {
+                                        this.x = x
+                                        this.y = y
+
+                                    }
+                                })
                             }
                         }
                     }
@@ -135,8 +140,13 @@ class DeathStarPage : VerticalLayout(), View {
     }
 
     private fun DestroyPlanetRequest(init: PlanetProto.DestroyPlanetRequest.Builder.() -> Unit) =
-        PlanetProto.DestroyPlanetRequest.newBuilder()
-                .apply(init)
-                .build()
+            PlanetProto.DestroyPlanetRequest.newBuilder()
+                    .apply(init)
+                    .build()
+
+    private fun Coordinates(init: PlanetProto.Coordinates.Builder.() -> Unit) =
+            PlanetProto.Coordinates.newBuilder()
+                    .apply(init)
+                    .build()
 
 }

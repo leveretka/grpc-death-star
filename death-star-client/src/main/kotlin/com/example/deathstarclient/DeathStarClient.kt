@@ -46,7 +46,7 @@ class DeathStarClient {
     )
 
     fun succesfulDestroyAttempt(p: PlanetProto.Planet): Boolean {
-        val probabilty = Math.min(50, 5000 / p.weight)
+        val probabilty = Math.min(100, 2000 / p.weight)
         return Random.nextInt(0..100) < probabilty
     }
 
