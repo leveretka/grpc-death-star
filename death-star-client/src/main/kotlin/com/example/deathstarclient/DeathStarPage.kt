@@ -55,7 +55,7 @@ class DeathStarPage : VerticalLayout(), View {
             baseSettings()
         }
         with(game) {
-            caption = "Destroy Planets by clicking!"
+            caption = "Hello, $userName!"
             baseSettings()
             styleName = "game"
         }
