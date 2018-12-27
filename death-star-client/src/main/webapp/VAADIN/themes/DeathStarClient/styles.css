@@ -1650,6 +1650,32 @@ div.v-layout.v-horizontal.v-widget {
 	}
 	}
 
+@-webkit-keyframes slide-out-bck-center {
+		0% {
+		-webkit-transform: translateZ(0);
+		transform: translateZ(0);
+		opacity: 1;
+	}
+		100% {
+		-webkit-transform: translateZ(-1100px);
+		transform: translateZ(-1100px);
+		opacity: 0;
+	}
+	}
+
+@keyframes slide-out-bck-center {
+		0% {
+		-webkit-transform: translateZ(0);
+		transform: translateZ(0);
+		opacity: 1;
+	}
+		100% {
+		-webkit-transform: translateZ(-1100px);
+		transform: translateZ(-1100px);
+		opacity: 0;
+	}
+	}
+
 .DeathStarClient.v-app, .DeathStarClient.v-app-loading {
 	font: 300 16px/1.55 "Open Sans", sans-serif;
 	color: #464646;
@@ -14800,8 +14826,9 @@ div.v-layout.v-horizontal.v-widget {
 }
 
 .DeathStarClient .game {
-	background-image: url('images/farback.gif');
+	background-image: url('images/background.jpg');
 	color: #555555;
+	touch-action: manipulation;
 }
 
 .DeathStarClient .logo {
@@ -14819,4 +14846,9 @@ div.v-layout.v-horizontal.v-widget {
 	-webkit-animation: spin 4s linear infinite;
 	-moz-animation: spin 4s linear infinite;
 	animation: spin 4s linear infinite;
+}
+
+.DeathStarClient .slide-out-bck-center {
+	-webkit-animation: slide-out-bck-center 0.5s cubic-bezier(0.55, 0.085, 0.68, 0.53) both;
+	animation: slide-out-bck-center 0.5s cubic-bezier(0.55, 0.085, 0.68, 0.53) both;
 }

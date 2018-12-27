@@ -62,7 +62,7 @@ class DeathStarPage : VerticalLayout(), View {
 
     }
 
-    override fun enter(event: ViewChangeEvent?) {
+     override fun enter(event: ViewChangeEvent?) {
         userName = VaadinSession.getCurrent().getAttribute("user").toString()
         defaultComponentAlignment = Alignment.TOP_CENTER
         addComponents(logo, game, services)
