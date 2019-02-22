@@ -46,8 +46,8 @@ class DeathStarClient {
     )
 
     fun succesfulDestroyAttempt(p: PlanetProto.Planet): Boolean {
-        val probabilty = Math.min(100, 2000 / p.weight)
-        return Random.nextInt(0..100) < probabilty
+        val prob = 0.1 * Math.sqrt(260412.5 - (p.weight * p.weight))
+        return Random.nextInt(0..100) < prob
     }
 
     private fun channelForTarget(target: String): ManagedChannel {

@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
       - name: death-star-service
-        image: gcr.io/death-star-222921/death-star-service:v1
+        image: gcr.io/death-star-poland/death-star-service:v1
         env:
         - name: PLANET_SERVICE_TARGET
           value: dns:///planet-service:50061

@@ -5,17 +5,14 @@ import io.grpc.ManagedChannel
 import io.grpc.ManagedChannelBuilder
 import io.grpc.internal.DnsNameResolverProvider
 import io.grpc.util.RoundRobinLoadBalancerFactory
-import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.asCoroutineDispatcher
-import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.ReceiveChannel
+import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.launch
 import ua.nedz.grpc.*
-import java.util.concurrent.Executors
 
-class DeathStarServiceImpl : DeathStarServiceImplBase(coroutineContext = Executors.newFixedThreadPool(16).asCoroutineDispatcher()) {
+class DeathStarServiceImpl : DeathStarServiceCoroutineGrpc.DeathStarServiceImplBase() {
 
-    private val listeners = mutableListOf<Channel<PlanetProto.Planets>>()
+    private val listeners = mutableListOf<SendChannel<PlanetProto.Planets>>()
 
     private var planetTarget: String = System.getenv("PLANET_SERVICE_TARGET") ?: "localhost:50061"
     private var scoreTarget: String = System.getenv("SCORE_SERVICE_TARGET") ?: "localhost:50071"
@@ -30,10 +27,10 @@ class DeathStarServiceImpl : DeathStarServiceImplBase(coroutineContext = Executo
     private val logChannel = channelForTarget(logTarget)
     private val logStub = LogServiceGrpc.newStub(logChannel)
 
-    @ExperimentalCoroutinesApi
-    override suspend fun destroy(requests: ReceiveChannel<PlanetProto.DestroyPlanetRequest>): ReceiveChannel<PlanetProto.Planets> {
-        val channel = Channel<PlanetProto.Planets>()
-        listeners.add(channel)
+
+    override suspend fun destroy(requestChannel: ReceiveChannel<PlanetProto.DestroyPlanetRequest>,
+                                 responseChannel: SendChannel<PlanetProto.Planets>) {
+        listeners.add(responseChannel)
         println("Sending all planets")
         launch {
             val allPlanets = planetStub.getAllPlanets(Empty.getDefaultInstance())
@@ -43,10 +40,10 @@ class DeathStarServiceImpl : DeathStarServiceImplBase(coroutineContext = Executo
                 val newPlanet = populateWithCoordinates(p, it % 10, it / 10)
                 planetsToSendBuilder.addPlanets(newPlanet)
             }
-            channel.send(planetsToSendBuilder.build())
+            responseChannel.send(planetsToSendBuilder.build())
             println("Sent all planets")
 
-            for (request in requests) {
+            for (request in requestChannel) {
                 println("Trying to remove planet")
                 val wasRemoved = planetStub.removePlanet(RemovePlanetRequest { planetId = request.planetId })
                 if (wasRemoved.result) {
@@ -67,11 +64,10 @@ class DeathStarServiceImpl : DeathStarServiceImplBase(coroutineContext = Executo
                 }
             }
         }
-        return channel
     }
 
     private fun populateWithCoordinates(p: PlanetProto.Planet, x: Int, y: Int): PlanetProto.Planet? {
-        val newPlanet = Planet {
+        return Planet {
             planetId = p.planetId
             name = p.name
             weight = p.weight
@@ -81,7 +77,6 @@ class DeathStarServiceImpl : DeathStarServiceImplBase(coroutineContext = Executo
                 this.y = y
             }
         }
-        return newPlanet
     }
 
     private fun channelForTarget(target: String): ManagedChannel {

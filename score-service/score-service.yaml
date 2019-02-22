@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
       - name: score-service
-        image: gcr.io/death-star-222921/score-service:v1
+        image: gcr.io/death-star-poland/score-service:v1
 
 ---
 apiVersion: v1

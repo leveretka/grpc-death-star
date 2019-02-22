@@ -23,9 +23,12 @@ apply plugin: 'com.google.protobuf'
 repositories {
     jcenter()
     mavenCentral()
+    maven { url 'https://oss.jfrog.org/artifactory/oss-snapshot-local' }
 }
 
 def grpcVersion = '1.15.1'
+
+def krotoplus_version = '0.2.2-SNAPSHOT'
 
 dependencies {
     compile "com.google.api.grpc:proto-google-common-protos:1.0.0"
@@ -33,6 +36,8 @@ dependencies {
     compile "io.grpc:grpc-netty:${grpcVersion}"
     compile "io.grpc:grpc-protobuf:${grpcVersion}"
     compile "io.grpc:grpc-stub:${grpcVersion}"
+    compile "org.jetbrains.kotlin:kotlin-stdlib-jdk8"
+    compile "com.github.marcoferrer.krotoplus:kroto-plus-coroutines:$krotoplus_version"
 }
 
 
@@ -50,11 +55,15 @@ protobuf {
         grpckotlin {
             artifact = "io.rouz:grpc-kotlin-gen:0.1.0:jdk8@jar"
         }
+        coroutines {
+            artifact = "com.github.marcoferrer.krotoplus:protoc-gen-grpc-coroutines:$krotoplus_version:jvm8@jar"
+        }
     }
     generateProtoTasks {
         all()*.plugins {
             grpc {}
             grpckotlin {}
+            coroutines {}
         }
     }
 }

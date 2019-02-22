@@ -13,12 +13,15 @@ import kotlinx.coroutines.launch
 import ua.nedz.grpc.PlanetProto
 import ua.nedz.grpc.ScoreServiceProto
 import java.io.File
+import java.util.concurrent.atomic.AtomicInteger
 
 
 class DeathStarPage : VerticalLayout(), View {
     companion object {
         const val NAME = ""
     }
+
+    val planetsCount = AtomicInteger(0)
 
     private val client = DeathStarClient()
 
@@ -62,13 +65,12 @@ class DeathStarPage : VerticalLayout(), View {
 
     }
 
-     override fun enter(event: ViewChangeEvent?) {
+    override fun enter(event: ViewChangeEvent?) {
         userName = VaadinSession.getCurrent().getAttribute("user").toString()
         defaultComponentAlignment = Alignment.TOP_CENTER
         addComponents(logo, game, services)
 
-        val (planets, logs, scores)
-                = client.join(userName)
+        val (planets, logs, scores) = client.join(userName)
 
         val current = UI.getCurrent()
 
@@ -97,40 +99,42 @@ class DeathStarPage : VerticalLayout(), View {
     }
 
     private suspend fun receivePlanets(planets: ManyToManyCall<PlanetProto.DestroyPlanetRequest, PlanetProto.Planets>, current: UI) {
-        for (planetsInGame in planets) {
-            planetsInGame.planetsList.forEach { planet ->
-                val planetImg = Image("", FileResource(File(
-                        "$basePath/WEB-INF/images/planets/planet${planet.img}.png")))
-                with(planetImg) {
-                    description = planet.name
-                    caption = "${planet.weight}"
-                    current.access {
-                        setWidth("60px")
-                        styleName = "planet-img"
-                        val x = planet.coordinates.x
-                        val y = planet.coordinates.y
-                        val oldComponent = game.getComponent(x, y)
-                        game.replaceComponent(oldComponent, this)
-                        addClickListener {
-                            if (client.succesfulDestroyAttempt(planet)) {
-                                val curUser = VaadinSession.getCurrent().getAttribute("user").toString()
-                                planets.send(DestroyPlanetRequest {
-                                    userName = curUser
-                                    planetId = planet.planetId
-                                    weight = planet.weight
-                                    coordinates = Coordinates {
-                                        this.x = x
-                                        this.y = y
+        while (planetsCount.get() < 6)
+            for (planetsInGame in planets) {
+                planetsCount.incrementAndGet()
+                planetsInGame.planetsList.forEach { planet ->
+                    val planetImg = Image("", FileResource(File(
+                            "$basePath/WEB-INF/images/planets_pxl/planet${planet.img}.png")))
+                    with(planetImg) {
+                        description = planet.name
+                        caption = "${planet.weight}"
+                        current.access {
+                            setWidth("60px")
+                            styleName = "planet-img"
+                            val x = planet.coordinates.x
+                            val y = planet.coordinates.y
+                            val oldComponent = game.getComponent(x, y)
+                            game.replaceComponent(oldComponent, this)
+                            addClickListener {
+                                if (client.succesfulDestroyAttempt(planet)) {
+                                    val curUser = VaadinSession.getCurrent().getAttribute("user").toString()
+                                    planets.send(DestroyPlanetRequest {
+                                        userName = curUser
+                                        planetId = planet.planetId
+                                        weight = planet.weight
+                                        coordinates = Coordinates {
+                                            this.x = x
+                                            this.y = y
 
-                                    }
-                                })
+                                        }
+                                    })
+                                }
                             }
                         }
                     }
                 }
-
+                planetsCount.decrementAndGet()
             }
-        }
     }
 
     private fun AbstractComponent.baseSettings() {
