@@ -104,7 +104,7 @@ class DeathStarPage : VerticalLayout(), View {
                 planetsCount.incrementAndGet()
                 planetsInGame.planetsList.forEach { planet ->
                     val planetImg = Image("", FileResource(File(
-                            "$basePath/WEB-INF/images/planets_pxl/planet${planet.img}.png")))
+                            "$basePath/WEB-INF/images/planets/planet${planet.img}.png")))
                     with(planetImg) {
                         description = planet.name
                         caption = "${planet.weight}"
