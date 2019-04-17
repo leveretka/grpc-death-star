@@ -14,6 +14,8 @@ repositories {
     mavenCentral()
 }
 
+def krotoplus_version = '0.3.0'
+
 dependencies {
     compile "org.jetbrains.kotlin:kotlin-stdlib-jdk8"
     compile "com.google.api.grpc:proto-google-common-protos:1.0.0"
@@ -23,6 +25,7 @@ dependencies {
     compile group: 'org.jetbrains.kotlinx', name: 'kotlinx-coroutines-core', version: '1.0.0'
     compile group: 'org.jetbrains.kotlinx', name: 'kotlinx-coroutines-guava', version: '1.0.0'
     compile "com.vaadin:vaadin-push:8.1.8"
+    compile "com.github.marcoferrer.krotoplus:kroto-plus-coroutines:$krotoplus_version"
 
     compile files ('death-star-api-1.0-SNAPSHOT.jar')
 

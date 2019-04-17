@@ -6,6 +6,7 @@ import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.guava.await
 import kotlinx.coroutines.launch
 import ua.nedz.grpc.*
+import ua.nedz.grpc.PlanetProto.DestroyPlanetRequest
 
 class FutureDeathStarServiceImpl : DeathStarServiceGrpc.DeathStarServiceImplBase() {
 
@@ -24,15 +25,14 @@ class FutureDeathStarServiceImpl : DeathStarServiceGrpc.DeathStarServiceImplBase
     private val logChannel = channelForTarget(logTarget)
     private val logStub = LogServiceGrpc.newFutureStub(logChannel)
 
-    override fun destroy(responseObserver: StreamObserver<PlanetProto.Planets>): StreamObserver<PlanetProto.DestroyPlanetRequest> {
+    override fun destroy(responseObserver: StreamObserver<PlanetProto.Planets>): StreamObserver<DestroyPlanetRequest> {
         listeners.add(responseObserver)
         GlobalScope.launch {
             val allPlanets = planetStub.getAllPlanets(Empty.getDefaultInstance()).await()
-            responseObserver.onNext(populateWithCoordinnates(allPlanets))
+            responseObserver.onNext(populateWithCoordinates(allPlanets))
         }
-
-        return object : StreamObserver<PlanetProto.DestroyPlanetRequest> by DefaultStreamObserver() {
-            override fun onNext(destroyPlanetRequest: PlanetProto.DestroyPlanetRequest) {
+        return object : StreamObserver<DestroyPlanetRequest> by DefaultStreamObserver() {
+            override fun onNext(destroyPlanetRequest: DestroyPlanetRequest) {
                 GlobalScope.launch {
                     val removePlanet = planetStub.removePlanet(
                             RemovePlanetRequest { planetId = destroyPlanetRequest.planetId }).await()
@@ -42,11 +42,8 @@ class FutureDeathStarServiceImpl : DeathStarServiceGrpc.DeathStarServiceImplBase
                             toAdd = destroyPlanetRequest.weight
                         })
                         logStub.destroyedPlanet(destroyPlanetRequest)
-
                         val newPlanet = planetStub.generateNewPlanet(Empty.getDefaultInstance()).await()
-
                         logStub.newPlanet(newPlanet)
-
                         listeners.forEach {
                             it.onNext(Planets {
                                 addPlanets(populateWithCoordinates(newPlanet,
@@ -56,7 +53,6 @@ class FutureDeathStarServiceImpl : DeathStarServiceGrpc.DeathStarServiceImplBase
                         }
                     }
                 }
-
             }
         }
     }

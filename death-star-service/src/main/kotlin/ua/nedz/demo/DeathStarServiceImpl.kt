@@ -1,6 +1,5 @@
 package ua.nedz.demo
 
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.ReceiveChannel
@@ -26,18 +25,13 @@ class DeathStarServiceImpl : DeathStarServiceImplBase(coroutineContext = Executo
     private val logChannel = channelForTarget(logTarget)
     private val logStub = LogServiceGrpc.newStub(logChannel)
 
-    @ExperimentalCoroutinesApi
     override suspend fun destroy(requests: ReceiveChannel<DestroyPlanetRequest>): ReceiveChannel<Planets> {
         val channel = Channel<Planets>()
         listeners.add(channel)
-
-        val populatedPlanets = populateWithCoordinnates(planetStub.getAllPlanets())
-        channel.send(populatedPlanets)
-
+        channel.send(populateWithCoordinates(planetStub.getAllPlanets()))
         for (request in requests) {
             val wasRemoved = planetStub.removePlanet(RemovePlanetRequest { planetId = request.planetId })
             if (wasRemoved.result) {
-                println("Removed Planet")
                 scoreStub.addScore(AddScoreRequest {
                     userName = request.userName
                     toAdd = request.weight

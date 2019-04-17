@@ -54,7 +54,7 @@ class DefaultStreamObserver<T> : StreamObserver<T> {
     override fun onCompleted() {}
 }
 
-fun populateWithCoordinnates(allPlanets: PlanetProto.Planets): PlanetProto.Planets {
+fun populateWithCoordinates(allPlanets: PlanetProto.Planets): PlanetProto.Planets {
     val populatedPlanets = Planets {
         (0 until allPlanets.planetsCount).forEach {
             val p = allPlanets.getPlanets(it)

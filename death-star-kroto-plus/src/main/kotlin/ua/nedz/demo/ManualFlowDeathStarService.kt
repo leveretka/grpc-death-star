@@ -1,18 +1,14 @@
 package ua.nedz.demo
 
 import com.google.protobuf.Empty
-import io.grpc.ManagedChannel
-import io.grpc.ManagedChannelBuilder
-import io.grpc.internal.DnsNameResolverProvider
 import io.grpc.stub.ServerCallStreamObserver
 import io.grpc.stub.StreamObserver
-import io.grpc.util.RoundRobinLoadBalancerFactory
 import ua.nedz.grpc.*
 import java.util.concurrent.atomic.AtomicBoolean
 
 class ManualFlowDeathStarService : DeathStarServiceGrpc.DeathStarServiceImplBase() {
 
-    private val listenersObservers = mutableListOf<StreamObserver<PlanetProto.Planets>>()
+    private val listeners = mutableListOf<StreamObserver<PlanetProto.Planets>>()
 
     private var planetTarget: String = System.getenv("PLANET_SERVICE_TARGET") ?: "localhost:50061"
     private var scoreTarget: String = System.getenv("SCORE_SERVICE_TARGET") ?: "localhost:50071"
@@ -37,39 +33,48 @@ class ManualFlowDeathStarService : DeathStarServiceGrpc.DeathStarServiceImplBase
                 serverCallStreamObserver.request(1)
             }
         }
-        listenersObservers.add(responseObserver)
+        listeners.add(responseObserver)
         planetStub.getAllPlanets(Empty.getDefaultInstance(),
                 object : StreamObserver<PlanetProto.Planets> by DefaultStreamObserver() {
                     override fun onNext(value: PlanetProto.Planets) {
-                        responseObserver.onNext(value)
+                        responseObserver.onNext(populateWithCoordinates(value))
                     }
                 })
         return object : StreamObserver<PlanetProto.DestroyPlanetRequest> by DefaultStreamObserver() {
-            override fun onNext(value: PlanetProto.DestroyPlanetRequest) {
-                planetStub.removePlanet(RemovePlanetRequest { planetId = value.planetId },
-                        object : StreamObserver<PlanetServiceProto.RemovePlanetResponse> by DefaultStreamObserver() {})
-                scoreStub.addScore(AddScoreRequest {
-                    userName = value.userName
-                    toAdd = value.weight
-                }, object : StreamObserver<Empty> by DefaultStreamObserver() {})
-                logStub.destroyedPlanet(value, object : StreamObserver<Empty> by DefaultStreamObserver() {})
-                planetStub.generateNewPlanet(Empty.getDefaultInstance(),
-                        object : StreamObserver<PlanetProto.Planet> by DefaultStreamObserver() {
-                            override fun onNext(value: PlanetProto.Planet) {
-                                logStub.newPlanet(value, object : StreamObserver<Empty> by DefaultStreamObserver() {})
-                                planetStub.getAllPlanets(Empty.getDefaultInstance(),
-                                        object : StreamObserver<PlanetProto.Planets> by DefaultStreamObserver() {
-                                            override fun onNext(value: PlanetProto.Planets) {
-                                                listenersObservers.forEach { it.onNext(value) }
-                                            }
-                                        })
+            override fun onNext(destroyPlanetRequest: PlanetProto.DestroyPlanetRequest) {
+                planetStub.removePlanet(RemovePlanetRequest { planetId = destroyPlanetRequest.planetId },
+                        object : StreamObserver<PlanetServiceProto.RemovePlanetResponse> by DefaultStreamObserver() {
+                            override fun onNext(removePlanetResponse: PlanetServiceProto.RemovePlanetResponse) {
+                                if (removePlanetResponse.result) {
+                                    scoreStub.addScore(AddScoreRequest {
+                                        userName = destroyPlanetRequest.userName
+                                        toAdd = destroyPlanetRequest.weight
+                                    }, object : StreamObserver<Empty> by DefaultStreamObserver() {})
+                                    logStub.destroyedPlanet(destroyPlanetRequest, object : StreamObserver<Empty>
+                                    by DefaultStreamObserver() {})
+                                    planetStub.generateNewPlanet(Empty.getDefaultInstance(),
+                                            object : StreamObserver<PlanetProto.Planet> by DefaultStreamObserver() {
+                                                override fun onNext(planet: PlanetProto.Planet) {
+                                                    logStub.newPlanet(planet, object : StreamObserver<Empty>
+                                                    by DefaultStreamObserver() {})
+                                                    listeners.forEach {
+                                                        it.onNext(Planets {
+                                                            addPlanets(populateWithCoordinates(planet,
+                                                                    destroyPlanetRequest.coordinates.x,
+                                                                    destroyPlanetRequest.coordinates.y))
+                                                        })
+                                                    }
+
+                                                }
+                                            })
+                                    if (serverCallStreamObserver.isReady) {
+                                        serverCallStreamObserver.request(1)
+                                    } else {
+                                        wasReady.set(false)
+                                    }
+                                }
                             }
                         })
-                if (serverCallStreamObserver.isReady) {
-                    serverCallStreamObserver.request(1)
-                } else {
-                    wasReady.set(false)
-                }
             }
         }
 
@@ -84,25 +89,4 @@ class ManualFlowDeathStarService : DeathStarServiceGrpc.DeathStarServiceImplBase
             ScoreServiceProto.AddScoreRequest.newBuilder()
                     .apply(init)
                     .build()
-}
-
-class DefaultStreamObserver<T> : StreamObserver<T> {
-    override fun onNext(value: T?) {
-    }
-
-    override fun onError(t: Throwable?) {
-    }
-
-    override fun onCompleted() {
-    }
-}
-
-
-private fun channelForTarget(target: String): ManagedChannel {
-    return ManagedChannelBuilder
-            .forTarget(target)
-            .nameResolverFactory(DnsNameResolverProvider())
-            .loadBalancerFactory(RoundRobinLoadBalancerFactory.getInstance())
-            .usePlaintext()
-            .build()
 }

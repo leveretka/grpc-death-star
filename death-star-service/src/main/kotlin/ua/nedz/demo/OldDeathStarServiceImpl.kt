@@ -29,7 +29,7 @@ class OldDeathStarServiceImpl : DeathStarServiceImplBase() {
         planetStub.getAllPlanets(Empty.getDefaultInstance(),
                 object : StreamObserver<Planets> by DefaultStreamObserver() {
                     override fun onNext(planets: Planets) {
-                        responseObserver.onNext(populateWithCoordinnates(planets))
+                        responseObserver.onNext(populateWithCoordinates(planets))
                     }
                 })
         return object : StreamObserver<DestroyPlanetRequest> by DefaultStreamObserver() {
@@ -37,26 +37,28 @@ class OldDeathStarServiceImpl : DeathStarServiceImplBase() {
                 planetStub.removePlanet(RemovePlanetRequest { planetId = destroyPlanetRequest.planetId },
                         object : StreamObserver<PlanetServiceProto.RemovePlanetResponse> by DefaultStreamObserver() {
                             override fun onNext(removePlanetResponse: PlanetServiceProto.RemovePlanetResponse) {
-                               if (removePlanetResponse.result) {
-                                   scoreStub.addScore(AddScoreRequest {
-                                       userName = destroyPlanetRequest.userName
-                                       toAdd = destroyPlanetRequest.weight
-                                   }, object : StreamObserver<Empty> by DefaultStreamObserver() {})
-                                   logStub.destroyedPlanet(destroyPlanetRequest, object : StreamObserver<Empty> by DefaultStreamObserver() {})
-                                   planetStub.generateNewPlanet(Empty.getDefaultInstance(),
-                                           object : StreamObserver<PlanetProto.Planet> by DefaultStreamObserver() {
-                                               override fun onNext(planet: PlanetProto.Planet) {
-                                                   logStub.newPlanet(planet, object : StreamObserver<Empty> by DefaultStreamObserver() {})
-                                                   listeners.forEach {
-                                                       it.onNext(Planets {
-                                                           addPlanets(populateWithCoordinates(planet,
-                                                                   destroyPlanetRequest.coordinates.x,
-                                                                   destroyPlanetRequest.coordinates.y))
-                                                       })
-                                                   }
-                                               }
-                                           })
-                               }
+                                if (removePlanetResponse.result) {
+                                    scoreStub.addScore(AddScoreRequest {
+                                        userName = destroyPlanetRequest.userName
+                                        toAdd = destroyPlanetRequest.weight
+                                    }, object : StreamObserver<Empty> by DefaultStreamObserver() {})
+                                    logStub.destroyedPlanet(destroyPlanetRequest, object : StreamObserver<Empty>
+                                    by DefaultStreamObserver() {})
+                                    planetStub.generateNewPlanet(Empty.getDefaultInstance(),
+                                            object : StreamObserver<PlanetProto.Planet> by DefaultStreamObserver() {
+                                                override fun onNext(planet: PlanetProto.Planet) {
+                                                    logStub.newPlanet(planet, object : StreamObserver<Empty>
+                                                    by DefaultStreamObserver() {})
+                                                    listeners.forEach {
+                                                        it.onNext(Planets {
+                                                            addPlanets(populateWithCoordinates(planet,
+                                                                    destroyPlanetRequest.coordinates.x,
+                                                                    destroyPlanetRequest.coordinates.y))
+                                                        })
+                                                    }
+                                                }
+                                            })
+                                }
                             }
                         })
             }

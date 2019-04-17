@@ -28,7 +28,7 @@ repositories {
 
 def grpcVersion = '1.15.1'
 
-def krotoplus_version = '0.2.2-SNAPSHOT'
+def krotoplus_version = '0.3.0'
 
 dependencies {
     compile "com.google.api.grpc:proto-google-common-protos:1.0.0"
