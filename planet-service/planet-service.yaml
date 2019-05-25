@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
       - name: planet-service
-        image: gcr.io/death-star-devoxx-fr/planet-service:v1
+        image: gcr.io/death-star-geecon/planet-service:v1
 
 ---
 apiVersion: v1

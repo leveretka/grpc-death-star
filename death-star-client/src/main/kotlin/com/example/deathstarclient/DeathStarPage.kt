@@ -70,13 +70,13 @@ class DeathStarPage : VerticalLayout(), View {
         defaultComponentAlignment = Alignment.TOP_CENTER
         addComponents(logo, game, services)
 
-        val (krotoPlanets, planets, logs, scores) = client.join(uName)
+        val (/*krotoPlanets, */planets, logs, scores) = client.join(uName)
 
         val current = UI.getCurrent()
 
-        GlobalScope.launch {
+/*        GlobalScope.launch {
             receivePlanets(krotoPlanets, current)
-        }
+        }*/
         GlobalScope.launch {
             receivePlanets(planets, current)
         }

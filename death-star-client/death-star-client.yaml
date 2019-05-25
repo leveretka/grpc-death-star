@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
       - name: death-star-client
-        image: gcr.io/death-star-devoxx-fr/death-star-client:v1.1
+        image: gcr.io/death-star-geecon/death-star-client:v1.1
         env:
         - name: DEATH_STAR_SERVICE_TARGET
           value: dns:///death-star-service:50051

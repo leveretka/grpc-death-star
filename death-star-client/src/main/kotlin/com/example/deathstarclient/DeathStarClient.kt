@@ -33,18 +33,18 @@ class DeathStarClient {
 
     fun join(userName: String): JoinResult {
         println("Inside Join")
-        val krotoPlanetsStream = deathStarKrotoStub.destroy()
+        //val krotoPlanetsStream = deathStarKrotoStub.destroy()
         val planetsStream = deathStarStub.destroy()
         val logStream = logStub.newUser(LogServiceProto.User.newBuilder()
                 .setName(userName)
                 .build())
         val scoresStream = scoreStub.scores(Empty.getDefaultInstance())
         println("Received all streams")
-        return JoinResult(krotoPlanetsStream, planetsStream, logStream, scoresStream)
+        return JoinResult(/*krotoPlanetsStream, */planetsStream, logStream, scoresStream)
     }
 
     data class JoinResult (
-            val krotoPlanetsStream: ClientBidiCallChannel<PlanetProto.DestroyPlanetRequest, PlanetProto.Planets>,
+            //val krotoPlanetsStream: ClientBidiCallChannel<PlanetProto.DestroyPlanetRequest, PlanetProto.Planets>,
             val planetsStream: ManyToManyCall<PlanetProto.DestroyPlanetRequest, PlanetProto.Planets>,
             val logStream: ReceiveChannel<LogServiceProto.Log>,
             val scoresStream: ReceiveChannel<ScoreServiceProto.ScoresResponse>

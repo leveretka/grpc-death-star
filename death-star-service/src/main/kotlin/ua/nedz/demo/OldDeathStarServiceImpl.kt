@@ -42,13 +42,11 @@ class OldDeathStarServiceImpl : DeathStarServiceImplBase() {
                                         userName = destroyPlanetRequest.userName
                                         toAdd = destroyPlanetRequest.weight
                                     }, object : StreamObserver<Empty> by DefaultStreamObserver() {})
-                                    logStub.destroyedPlanet(destroyPlanetRequest, object : StreamObserver<Empty>
-                                    by DefaultStreamObserver() {})
+                                    logStub.destroyedPlanet(destroyPlanetRequest, object : StreamObserver<Empty> by DefaultStreamObserver() {})
                                     planetStub.generateNewPlanet(Empty.getDefaultInstance(),
                                             object : StreamObserver<PlanetProto.Planet> by DefaultStreamObserver() {
                                                 override fun onNext(planet: PlanetProto.Planet) {
-                                                    logStub.newPlanet(planet, object : StreamObserver<Empty>
-                                                    by DefaultStreamObserver() {})
+                                                    logStub.newPlanet(planet, object : StreamObserver<Empty> by DefaultStreamObserver() {})
                                                     listeners.forEach {
                                                         it.onNext(Planets {
                                                             addPlanets(populateWithCoordinates(planet,

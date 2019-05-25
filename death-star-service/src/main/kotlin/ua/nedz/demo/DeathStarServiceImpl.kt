@@ -1,8 +1,10 @@
 package ua.nedz.demo
 
+import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.ReceiveChannel
+import kotlinx.coroutines.launch
 import ua.nedz.grpc.*
 import ua.nedz.grpc.PlanetProto.DestroyPlanetRequest
 import ua.nedz.grpc.PlanetProto.Planets
@@ -28,21 +30,23 @@ class DeathStarServiceImpl : DeathStarServiceImplBase(coroutineContext = Executo
     override suspend fun destroy(requests: ReceiveChannel<DestroyPlanetRequest>): ReceiveChannel<Planets> {
         val channel = Channel<Planets>()
         listeners.add(channel)
-        channel.send(populateWithCoordinates(planetStub.getAllPlanets()))
-        for (request in requests) {
-            val wasRemoved = planetStub.removePlanet(RemovePlanetRequest { planetId = request.planetId })
-            if (wasRemoved.result) {
-                scoreStub.addScore(AddScoreRequest {
-                    userName = request.userName
-                    toAdd = request.weight
-                })
-                logStub.destroyedPlanet(request)
-                val newPlanet = planetStub.generateNewPlanet()
-                logStub.newPlanet(newPlanet)
-                listeners.forEach {
-                    it.send(Planets {
-                        addPlanets(populateWithCoordinates(newPlanet, request.coordinates.x, request.coordinates.y))
+        GlobalScope.launch {
+            channel.send(populateWithCoordinates(planetStub.getAllPlanets()))
+            for (request in requests) {
+                val wasRemoved = planetStub.removePlanet(RemovePlanetRequest { planetId = request.planetId })
+                if (wasRemoved.result) {
+                    scoreStub.addScore(AddScoreRequest {
+                        userName = request.userName
+                        toAdd = request.weight
                     })
+                    logStub.destroyedPlanet(request)
+                    val newPlanet = planetStub.generateNewPlanet()
+                    logStub.newPlanet(newPlanet)
+                    listeners.forEach {
+                        it.send(Planets {
+                            addPlanets(populateWithCoordinates(newPlanet, request.coordinates.x, request.coordinates.y))
+                        })
+                    }
                 }
             }
         }
