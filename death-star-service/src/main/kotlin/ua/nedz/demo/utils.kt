@@ -5,14 +5,13 @@ import io.grpc.ManagedChannel
 import io.grpc.ManagedChannelBuilder
 import io.grpc.internal.DnsNameResolverProvider
 import io.grpc.stub.StreamObserver
-import io.grpc.util.RoundRobinLoadBalancerFactory
 import ua.nedz.grpc.*
 
 fun channelForTarget(target: String): ManagedChannel {
     return ManagedChannelBuilder
             .forTarget(target)
             .nameResolverFactory(DnsNameResolverProvider())
-            .loadBalancerFactory(RoundRobinLoadBalancerFactory.getInstance())
+            .defaultLoadBalancingPolicy("round_robin")
             .usePlaintext()
             .build()
 }

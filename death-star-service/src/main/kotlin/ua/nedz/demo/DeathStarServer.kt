@@ -15,7 +15,8 @@ class DeathStarServer (private val port: Int = 50051, private val serverBuilder:
 
     fun start() {
         server = serverBuilder
-                .addService(ServerInterceptors.intercept(DeathStarServiceImpl(), UnknownStatusIntertceptor()))
+//                .addService(ServerInterceptors.intercept(DeathStarServiceImpl(), UnknownStatusIntertceptor()))
+                .addService(ServerInterceptors.intercept(DeathStarServiceKrotoImpl(), UnknownStatusIntertceptor()))
                 .build()
                 .start()
         println("Server started!")

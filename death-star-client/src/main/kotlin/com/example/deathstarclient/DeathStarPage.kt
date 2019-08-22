@@ -14,7 +14,9 @@ import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.channels.consumeEach
 import kotlinx.coroutines.launch
 import ua.nedz.grpc.PlanetProto
+import ua.nedz.grpc.PlanetProtoBuilders.DestroyPlanetRequest
 import ua.nedz.grpc.ScoreServiceProto
+import ua.nedz.grpc.coordinates
 import java.io.File
 
 
@@ -70,13 +72,10 @@ class DeathStarPage : VerticalLayout(), View {
         defaultComponentAlignment = Alignment.TOP_CENTER
         addComponents(logo, game, services)
 
-        val (/*krotoPlanets, */planets, logs, scores) = client.join(uName)
+        val (planets, logs, scores) = client.join(uName)
 
         val current = UI.getCurrent()
 
-/*        GlobalScope.launch {
-            receivePlanets(krotoPlanets, current)
-        }*/
         GlobalScope.launch {
             receivePlanets(planets, current)
         }
@@ -149,11 +148,11 @@ class DeathStarPage : VerticalLayout(), View {
                         game.replaceComponent(oldComponent, this)
                         addClickListener {
                             if (client.succesfulDestroyAttempt(planet)) {
-                                planets.send(client.DestroyPlanetRequest {
+                                planets.send(DestroyPlanetRequest {
                                     userName = uName
                                     planetId = planet.planetId
                                     weight = planet.weight
-                                    coordinates = client.Coordinates {
+                                    coordinates{
                                         this.x = x
                                         this.y = y
                                     }

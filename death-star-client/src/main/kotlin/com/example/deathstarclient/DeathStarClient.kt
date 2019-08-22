@@ -1,13 +1,10 @@
 package com.example.deathstarclient
 
 import com.github.marcoferrer.krotoplus.coroutines.client.ClientBidiCallChannel
-import com.google.protobuf.Empty
 import io.grpc.ClientInterceptors
 import io.grpc.ManagedChannel
 import io.grpc.ManagedChannelBuilder
 import io.grpc.internal.DnsNameResolverProvider
-import io.grpc.util.RoundRobinLoadBalancerFactory
-import io.rouz.grpc.ManyToManyCall
 import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.channels.SendChannel
 import ua.nedz.grpc.*
@@ -22,32 +19,28 @@ class DeathStarClient {
 
     private val ch = channelForTarget(deathStarTarget)
     private val deathStarChannel = ClientInterceptors.intercept(ch, HackTheSystemInterceptor())
-    private val deathStarStub = DeathStarServiceGrpc.newStub(deathStarChannel)
-    private val deathStarKrotoStub = DeathStarServiceCoroutineGrpc.newStub(deathStarChannel)
+    private val deathStarStub = DeathStarServiceCoroutineGrpc.newStub(deathStarChannel)
 
     private val scoreChannel = channelForTarget(scoreTarget)
-    private val scoreStub = ScoreServiceGrpc.newStub(scoreChannel)
+    private val scoreStub = ScoreServiceCoroutineGrpc.newStub(scoreChannel)
 
     private val logChannel = channelForTarget(logTarget)
-    private val logStub = LogServiceGrpc.newStub(logChannel)
+    private val logStub = LogServiceCoroutineGrpc.newStub(logChannel)
 
     fun join(userName: String): JoinResult {
         println("Inside Join")
-        //val krotoPlanetsStream = deathStarKrotoStub.destroy()
         val planetsStream = deathStarStub.destroy()
-        val logStream = logStub.newUser(LogServiceProto.User.newBuilder()
-                .setName(userName)
-                .build())
-        val scoresStream = scoreStub.scores(Empty.getDefaultInstance())
+        val logStream = logStub.newUser{ name = userName }
+        val scoresStream = scoreStub.scores()
         println("Received all streams")
-        return JoinResult(/*krotoPlanetsStream, */planetsStream, logStream, scoresStream)
+
+        return JoinResult(planetsStream, logStream, scoresStream)
     }
 
     data class JoinResult (
-            //val krotoPlanetsStream: ClientBidiCallChannel<PlanetProto.DestroyPlanetRequest, PlanetProto.Planets>,
-            val planetsStream: ManyToManyCall<PlanetProto.DestroyPlanetRequest, PlanetProto.Planets>,
-            val logStream: ReceiveChannel<LogServiceProto.Log>,
-            val scoresStream: ReceiveChannel<ScoreServiceProto.ScoresResponse>
+        val planetsStream: ClientBidiCallChannel<PlanetProto.DestroyPlanetRequest, PlanetProto.Planets>,
+        val logStream: ReceiveChannel<LogServiceProto.Log>,
+        val scoresStream: ReceiveChannel<ScoreServiceProto.ScoresResponse>
     )
 
     fun succesfulDestroyAttempt(p: PlanetProto.Planet): Boolean {
@@ -55,37 +48,30 @@ class DeathStarClient {
         return Random.nextInt(0..100) < prob
     }
 
-    suspend fun tryDestroy(planet: PlanetProto.Planet, name: String, inChannel: SendChannel<PlanetProto.DestroyPlanetRequest>, x: Int, y: Int) {
+    suspend fun tryDestroy(
+        planet: PlanetProto.Planet,
+        name: String,
+        inChannel: SendChannel<PlanetProto.DestroyPlanetRequest>,
+        x: Int, y: Int
+    ) {
         if (succesfulDestroyAttempt(planet)) {
-            inChannel.send(DestroyPlanetRequest {
+            inChannel.send {
                 userName = name
                 planetId = planet.planetId
                 weight = planet.weight
-                coordinates = Coordinates {
+                coordinates {
                     this.x = x
                     this.y = y
-
                 }
-            })
+            }
         }
     }
-
-    fun DestroyPlanetRequest(init: PlanetProto.DestroyPlanetRequest.Builder.() -> Unit) =
-            PlanetProto.DestroyPlanetRequest.newBuilder()
-                    .apply(init)
-                    .build()
-
-    fun Coordinates(init: PlanetProto.Coordinates.Builder.() -> Unit) =
-            PlanetProto.Coordinates.newBuilder()
-                    .apply(init)
-                    .build()
-
 
     private fun channelForTarget(target: String): ManagedChannel {
         return ManagedChannelBuilder
                 .forTarget(target)
                 .nameResolverFactory(DnsNameResolverProvider())
-                .loadBalancerFactory(RoundRobinLoadBalancerFactory.getInstance())
+                .defaultLoadBalancingPolicy("round_robin")
                 .usePlaintext()
                 .build()
     }

@@ -14,7 +14,8 @@ class PlanetServer (private val port: Int = 50061, private val serverBuilder: Se
 
     fun start() {
         server = serverBuilder
-                .addService(PlanetServiceImpl())
+//                .addService(PlanetServiceImpl())
+                .addService(PlanetServiceKrotoImpl())
                 .build()
                 .start()
         println("Server started!")

@@ -14,7 +14,8 @@ class ScoreServer (private val port: Int = 50071, private val serverBuilder: Ser
 
     fun start() {
         server = serverBuilder
-                .addService(ScoreServiceImpl())
+//                .addService(ScoreServiceImpl())
+                .addService(ScoreServiceKrotoImpl())
                 .build()
                 .start()
         println("Server started!")
