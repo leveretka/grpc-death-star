@@ -1,0 +1,7 @@
+proto_builders {
+    filter { exclude_path: "google/*" }
+    use_dsl_markers: true
+}
+grpc_coroutines {
+    filter { exclude_path: "google/*" }
+}

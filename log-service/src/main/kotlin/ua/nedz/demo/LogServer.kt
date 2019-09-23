@@ -14,7 +14,8 @@ class LogServer (private val port: Int = 50081, private val serverBuilder: Serve
 
     fun start() {
         server = serverBuilder
-                .addService(LogServiceImpl())
+//                .addService(LogServiceImpl())
+                .addService(LogServiceKrotoImpl())
                 .build()
                 .start()
         println("Server started!")
