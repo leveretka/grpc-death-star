@@ -27,7 +27,7 @@ class DeathStarServiceImpl : DeathStarServiceImplBase(coroutineContext = Executo
     private val logChannel = channelForTarget(logTarget)
     private val logStub = LogServiceGrpc.newStub(logChannel)
 
-    override suspend fun destroy(requests: ReceiveChannel<DestroyPlanetRequest>): ReceiveChannel<Planets> {
+    override fun destroy(requests: ReceiveChannel<DestroyPlanetRequest>): ReceiveChannel<Planets> {
         val channel = Channel<Planets>()
         listeners.add(channel)
         GlobalScope.launch {
