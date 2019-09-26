@@ -40,7 +40,7 @@ class ScoreServiceImpl: ScoreServiceImplBase(coroutineContext = Executors.newFix
     }
 
     @ExperimentalCoroutinesApi
-    override suspend fun scores(request: Empty): ReceiveChannel<ScoreServiceProto.ScoresResponse> {
+    override fun scores(request: Empty): ReceiveChannel<ScoreServiceProto.ScoresResponse> {
         val channel = Channel<ScoreServiceProto.ScoresResponse>()
         listeners.add(channel)
         notifyListeners(channel)

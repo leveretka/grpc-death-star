@@ -37,10 +37,10 @@ class LogServiceImpl: LogServiceImplBase(coroutineContext = newFixedThreadPool(4
         return Empty.getDefaultInstance()
     }
 
-    override suspend fun newUser(request: LogServiceProto.User): ReceiveChannel<LogServiceProto.Log> {
+    override fun newUser(request: LogServiceProto.User): ReceiveChannel<LogServiceProto.Log> {
         val channel = Channel<LogServiceProto.Log>()
         listeners.add(channel)
-        notifyUsers("User ${request.name} joined.")
+        launch { notifyUsers("User ${request.name} joined.") }
         return channel
     }
 

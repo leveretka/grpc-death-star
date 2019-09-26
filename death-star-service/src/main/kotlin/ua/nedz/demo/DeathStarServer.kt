@@ -4,7 +4,7 @@ import io.grpc.Server
 import io.grpc.ServerBuilder
 import io.grpc.ServerInterceptors
 
-fun main(args: Array<String>) {
+fun main() {
     val server = DeathStarServer()
     server.start()
     server.blockUntilShutdown()

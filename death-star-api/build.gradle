@@ -33,6 +33,7 @@ def krotoplus_version = '0.3.0'
 dependencies {
     compile "com.google.api.grpc:proto-google-common-protos:1.0.0"
     compile group: 'org.jetbrains.kotlinx', name: 'kotlinx-coroutines-core', version: '1.0.0'
+    compile group: 'javax.annotation', name: 'javax.annotation-api', version: '1.2'
     compile "io.grpc:grpc-netty:${grpcVersion}"
     compile "io.grpc:grpc-protobuf:${grpcVersion}"
     compile "io.grpc:grpc-stub:${grpcVersion}"
@@ -53,7 +54,7 @@ protobuf {
             artifact = "io.grpc:protoc-gen-grpc-java:${grpcVersion}"
         }
         grpckotlin {
-            artifact = "io.rouz:grpc-kotlin-gen:0.1.0:jdk8@jar"
+            artifact = "io.rouz:grpc-kotlin-gen:0.1.2:jdk8@jar"
         }
         coroutines {
             artifact = "com.github.marcoferrer.krotoplus:protoc-gen-grpc-coroutines:$krotoplus_version:jvm8@jar"

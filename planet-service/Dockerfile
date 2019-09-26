@@ -4,11 +4,12 @@ FROM openjdk:${VERSION}-jdk as BUILD
 
 COPY . /src
 WORKDIR /src
-RUN ./gradlew --no-daemon shadowJar
+#RUN ./gradlew wrapper
+#RUN ./gradlew clean build
 
 FROM openjdk:${VERSION}-jre
 
-COPY --from=BUILD /src/build/libs/planet-service-1.0-SNAPSHOT-all.jar /bin/runner/run.jar
+COPY --from=BUILD /src/build/libs/planet-service-1.0-SNAPSHOT.jar /bin/runner/run.jar
 WORKDIR /bin/runner
 
 CMD ["java","-jar","run.jar"]

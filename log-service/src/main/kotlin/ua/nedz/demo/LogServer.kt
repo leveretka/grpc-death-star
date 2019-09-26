@@ -3,7 +3,7 @@ package ua.nedz.demo
 import io.grpc.Server
 import io.grpc.ServerBuilder
 
-fun main(args: Array<String>) {
+fun main() {
     val server = LogServer()
     server.start()
     server.blockUntilShutdown()

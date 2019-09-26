@@ -16,10 +16,4 @@ include 'services:webservice'
 */
 
 rootProject.name = 'grpc-death-star'
-include 'death-star-api'
-include 'planet-service'
-include 'log-service'
-include 'score-service'
-include 'death-star-service'
-include 'death-star-kroto-plus'
-include 'death-star-client'
+include 'death-star-api', 'planet-service', 'log-service', 'score-service', 'death-star-service', 'death-star-kroto-plus', 'death-star-client'

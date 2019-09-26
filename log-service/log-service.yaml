@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
       - name: log-service
-        image: gcr.io/death-star-geecon/log-service:v1
+        image: gcr.io/death-star-geecon/log-service:v1.2
         env:
         - name: PLANET_SERVICE_TARGET
           value: dns:///planet-service:50061

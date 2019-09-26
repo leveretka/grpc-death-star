@@ -2,6 +2,7 @@ package ua.nedz.demo
 
 import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.channels.SendChannel
+import kotlinx.coroutines.coroutineScope
 import ua.nedz.grpc.*
 
 class DeathStarServiceImpl : DeathStarServiceCoroutineGrpc.DeathStarServiceImplBase() {
@@ -24,22 +25,24 @@ class DeathStarServiceImpl : DeathStarServiceCoroutineGrpc.DeathStarServiceImplB
 
     override suspend fun destroy(requestChannel: ReceiveChannel<PlanetProto.DestroyPlanetRequest>,
                                  responseChannel: SendChannel<PlanetProto.Planets>) {
-        listeners.add(responseChannel)
-        responseChannel.send(populateWithCoordinates(planetStub.getAllPlanets()))
-        for (request in requestChannel) {
-            val wasRemoved = planetStub.removePlanet(RemovePlanetRequest { planetId = request.planetId })
-            if (wasRemoved.result) {
-                scoreStub.addScore(AddScoreRequest {
-                    userName = request.userName
-                    toAdd = request.weight
-                })
-                logStub.destroyedPlanet(request)
-                val newPlanet = planetStub.generateNewPlanet()
-                logStub.newPlanet(newPlanet)
-                listeners.forEach {
-                    it.send(Planets {
-                        addPlanets(populateWithCoordinates(newPlanet, request.coordinates.x, request.coordinates.y))
+        coroutineScope {
+            listeners.add(responseChannel)
+            responseChannel.send(populateWithCoordinates(planetStub.getAllPlanets()))
+            for (request in requestChannel) {
+                val wasRemoved = planetStub.removePlanet(RemovePlanetRequest { planetId = request.planetId })
+                if (wasRemoved.result) {
+                    scoreStub.addScore(AddScoreRequest {
+                        userName = request.userName
+                        toAdd = request.weight
                     })
+                    logStub.destroyedPlanet(request)
+                    val newPlanet = planetStub.generateNewPlanet()
+                    logStub.newPlanet(newPlanet)
+                    listeners.forEach {
+                        it.send(Planets {
+                            addPlanets(populateWithCoordinates(newPlanet, request.coordinates.x, request.coordinates.y))
+                        })
+                    }
                 }
             }
         }
