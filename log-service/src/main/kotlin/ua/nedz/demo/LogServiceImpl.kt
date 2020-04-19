@@ -4,15 +4,15 @@ import com.google.protobuf.Empty
 import io.grpc.ManagedChannelBuilder
 import io.grpc.internal.DnsNameResolverProvider
 import io.grpc.util.RoundRobinLoadBalancerFactory
-import kotlinx.coroutines.asCoroutineDispatcher
-import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.channels.ReceiveChannel
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.FlowCollector
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.launch
 import ua.nedz.grpc.*
-import java.util.concurrent.Executors.newFixedThreadPool
 
-class LogServiceImpl: LogServiceImplBase(coroutineContext = newFixedThreadPool(4).asCoroutineDispatcher()) {
-    private val listeners = mutableListOf<Channel<LogServiceProto.Log>>()
+class LogServiceImpl: LogServiceGrpcKt.LogServiceCoroutineImplBase() {
+    private val listeners = mutableListOf<FlowCollector<LogServiceProto.Log>>()
 
     private var planetTarget: String = System.getenv("PLANET_SERVICE_TARGET") ?: "localhost:50061"
 
@@ -22,7 +22,8 @@ class LogServiceImpl: LogServiceImplBase(coroutineContext = newFixedThreadPool(4
             .loadBalancerFactory(RoundRobinLoadBalancerFactory.getInstance())
             .usePlaintext()
             .build()
-    private val planetStub = PlanetServiceGrpc.newStub(planetChannel)
+
+    private val planetStub = PlanetServiceGrpcKt.PlanetServiceCoroutineStub(planetChannel)
 
     override suspend fun newPlanet(request: PlanetProto.Planet): Empty {
         notifyUsers("Planet ${request.name} was born.")
@@ -37,17 +38,15 @@ class LogServiceImpl: LogServiceImplBase(coroutineContext = newFixedThreadPool(4
         return Empty.getDefaultInstance()
     }
 
-    override fun newUser(request: LogServiceProto.User): ReceiveChannel<LogServiceProto.Log> {
-        val channel = Channel<LogServiceProto.Log>()
-        listeners.add(channel)
-        launch { notifyUsers("User ${request.name} joined.") }
-        return channel
+    override fun newUser(request: LogServiceProto.User): Flow<LogServiceProto.Log> = flow {
+        listeners.add(this)
+        GlobalScope.launch { notifyUsers("User ${request.name} joined.") }
     }
 
     private suspend fun notifyUsers(message: String) =
         listeners.forEach {
-            launch {
-                it.send(LogServiceProto.Log.newBuilder()
+            GlobalScope.launch {
+                it.emit(LogServiceProto.Log.newBuilder()
                         .setMessage(message)
                         .build())
             }

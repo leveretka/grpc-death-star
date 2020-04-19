@@ -5,14 +5,12 @@ import io.grpc.ManagedChannel
 import io.grpc.ManagedChannelBuilder
 import io.grpc.internal.DnsNameResolverProvider
 import io.grpc.stub.StreamObserver
-import io.grpc.util.RoundRobinLoadBalancerFactory
 import ua.nedz.grpc.*
 
 fun channelForTarget(target: String): ManagedChannel {
     return ManagedChannelBuilder
             .forTarget(target)
             .nameResolverFactory(DnsNameResolverProvider())
-            .loadBalancerFactory(RoundRobinLoadBalancerFactory.getInstance())
             .usePlaintext()
             .build()
 }
@@ -41,10 +39,6 @@ fun Planets(init: PlanetProto.Planets.Builder.() -> Unit) =
         PlanetProto.Planets.newBuilder()
                 .apply(init)
                 .build()
-
-suspend fun PlanetServiceGrpc.PlanetServiceStub.getAllPlanets() = this.getAllPlanets(Empty.getDefaultInstance())
-
-suspend fun PlanetServiceGrpc.PlanetServiceStub.generateNewPlanet() = this.generateNewPlanet(Empty.getDefaultInstance())
 
 class DefaultStreamObserver<T> : StreamObserver<T> {
     override fun onNext(value: T?) {}
@@ -78,3 +72,10 @@ fun populateWithCoordinates(p: PlanetProto.Planet, x: Int, y: Int): PlanetProto.
     }
     return newPlanet
 }
+
+suspend fun PlanetServiceGrpcKt.PlanetServiceCoroutineStub.getAllPlanets() =
+        getAllPlanets(Empty.getDefaultInstance())
+
+suspend fun PlanetServiceGrpcKt.PlanetServiceCoroutineStub.generateNewPlanet() =
+        generateNewPlanet(Empty.getDefaultInstance())
+
