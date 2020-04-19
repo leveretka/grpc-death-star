@@ -1,23 +1,24 @@
 package com.example.deathstarclient
 
-import com.github.marcoferrer.krotoplus.coroutines.client.ClientBidiCallChannel
 import com.vaadin.navigator.View
 import com.vaadin.navigator.ViewChangeListener.ViewChangeEvent
 import com.vaadin.server.FileResource
 import com.vaadin.server.VaadinService
 import com.vaadin.server.VaadinSession
 import com.vaadin.ui.*
-import io.rouz.grpc.ManyToManyCall
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.ObsoleteCoroutinesApi
-import kotlinx.coroutines.channels.ReceiveChannel
-import kotlinx.coroutines.channels.consumeEach
+import kotlinx.coroutines.channels.ProducerScope
+import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import ua.nedz.grpc.PlanetProto
 import ua.nedz.grpc.ScoreServiceProto
 import java.io.File
 
 
+@ExperimentalCoroutinesApi
 class DeathStarPage : VerticalLayout(), View {
     companion object {
         const val NAME = ""
@@ -65,32 +66,40 @@ class DeathStarPage : VerticalLayout(), View {
 
     }
 
+    private lateinit var sendFlow: ProducerScope<PlanetProto.DestroyPlanetRequest>
+
+    @ObsoleteCoroutinesApi
     override fun enter(event: ViewChangeEvent?) {
         uName = VaadinSession.getCurrent().getAttribute("user").toString()
         defaultComponentAlignment = Alignment.TOP_CENTER
         addComponents(logo, game, services)
 
-        val (/*krotoPlanets, */planets, logs, scores) = client.join(uName)
+        val destroyFlow = channelFlow<PlanetProto.DestroyPlanetRequest> {
+            sendFlow = this
+            awaitClose {  }
+        }
+
+        val (planets, logs, scores) = client.join(uName, destroyFlow)
 
         val current = UI.getCurrent()
 
-/*        GlobalScope.launch {
-            receivePlanets(krotoPlanets, current)
-        }*/
         GlobalScope.launch {
             receivePlanets(planets, current)
         }
         GlobalScope.launch {
-            for (log in logs)
-                current.access { logsArea.value += "${log.message}\n" }
+            println("Inside receive Logs")
+            logs.collect {
+                current.access { logsArea.value += "${it.message}\n" }
+            }
         }
         GlobalScope.launch {
             receiveScores(scores, current)
         }
     }
 
-    private suspend fun receiveScores(scores: ReceiveChannel<ScoreServiceProto.ScoresResponse>, current: UI) {
-        for (scoresResponse in scores) {
+    private suspend fun receiveScores(scores: Flow<ScoreServiceProto.ScoresResponse>, current: UI) {
+        println("Inside receive Scores")
+        scores.collect { scoresResponse ->
             current.access {
                 with(scoresTable) {
                     removeAllComponents()
@@ -102,64 +111,44 @@ class DeathStarPage : VerticalLayout(), View {
     }
 
     @ObsoleteCoroutinesApi
-    private suspend fun receivePlanets(planets: ClientBidiCallChannel<PlanetProto.DestroyPlanetRequest, PlanetProto.Planets>, current: UI) {
-        val (inChannel, outChannel) = planets
-        outChannel.consumeEach {
-            it.planetsList.forEach { planet ->
-                val planetImg = Image("", FileResource(File(
-                        "$basePath/WEB-INF/images/planets/planet${planet.img}.png")))
-                with(planetImg) {
-                    description = planet.name
-                    caption = "${planet.weight}"
-                    current.access {
-                        setWidth("60px")
-                        styleName = "planet-img"
-                        val x = planet.coordinates.x
-                        val y = planet.coordinates.y
-                        val oldComponent = game.getComponent(x, y)
-                        game.replaceComponent(oldComponent, this)
-                        addClickListener {
-                            GlobalScope.launch {
-                                client.tryDestroy(planet, uName, inChannel, x, y)
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
+    private suspend fun receivePlanets(planets: Flow<PlanetProto.Planets>, current: UI) {
+        println("Inside receive Planet")
+        planets.collect {
+            println("Inside receive Planet collect")
 
-    private suspend fun receivePlanets(planets: ManyToManyCall<PlanetProto.DestroyPlanetRequest, PlanetProto.Planets>, current: UI) {
-        println("Inside receive planets")
-        for (planetsInGame in planets) {
-            println("PlanetsInGame: ${planetsInGame.planetsList}")
-            planetsInGame.planetsList.forEach { planet ->
-                println("planet is $planet")
-                val planetImg = Image("", FileResource(File(
-                        "$basePath/WEB-INF/images/planets/planet${planet.img}.png")))
-                with(planetImg) {
-                    description = planet.name
-                    caption = "${planet.weight}"
-                    current.access {
-                        setWidth("60px")
-                        styleName = "planet-img"
-                        val x = planet.coordinates.x
-                        val y = planet.coordinates.y
-                        val oldComponent = game.getComponent(x, y)
-                        game.replaceComponent(oldComponent, this)
-                        addClickListener {
-                            if (client.succesfulDestroyAttempt(planet)) {
-                                planets.send(client.DestroyPlanetRequest {
-                                    userName = uName
-                                    planetId = planet.planetId
-                                    weight = planet.weight
-                                    coordinates = client.Coordinates {
-                                        this.x = x
-                                        this.y = y
+            planets.collect {
+                println("PlanetsInGame: ${it.planetsList}")
+
+                it.planetsList.forEach { planet ->
+                    println("planet is $planet")
+
+                    val planetImg = Image("", FileResource(File(
+                            "$basePath/WEB-INF/images/planets/planet${planet.img}.png")))
+                    with(planetImg) {
+                        description = planet.name
+                        caption = "${planet.weight}"
+                        current.access {
+                            setWidth("60px")
+                            styleName = "planet-img"
+                            val x = planet.coordinates.x
+                            val y = planet.coordinates.y
+                            val oldComponent = game.getComponent(x, y)
+                            game.replaceComponent(oldComponent, this)
+                            addClickListener {
+                                GlobalScope.launch {
+                                    if (client.succesfulDestroyAttempt(planet)) {
+                                        sendFlow.send(client.DestroyPlanetRequest {
+                                            userName = uName
+                                            planetId = planet.planetId
+                                            weight = planet.weight
+                                            coordinates = client.Coordinates {
+                                                this.x = x
+                                                this.y = y
+                                            }
+                                        })
                                     }
-                                })
+                                }
                             }
-
                         }
                     }
                 }
@@ -172,6 +161,4 @@ class DeathStarPage : VerticalLayout(), View {
         setHeight("100%")
         defaultComponentAlignment = Alignment.MIDDLE_CENTER
     }
-
-
 }

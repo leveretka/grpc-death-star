@@ -4,15 +4,17 @@ import com.google.protobuf.Empty
 import io.grpc.ManagedChannelBuilder
 import io.grpc.internal.DnsNameResolverProvider
 import io.grpc.util.RoundRobinLoadBalancerFactory
-import kotlinx.coroutines.asCoroutineDispatcher
-import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.channels.ReceiveChannel
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.channels.ProducerScope
+import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import ua.nedz.grpc.*
-import java.util.concurrent.Executors.newFixedThreadPool
 
-class LogServiceImpl: LogServiceImplBase(coroutineContext = newFixedThreadPool(4).asCoroutineDispatcher()) {
-    private val listeners = mutableListOf<Channel<LogServiceProto.Log>>()
+@ExperimentalCoroutinesApi
+class LogServiceImpl: LogServiceGrpcKt.LogServiceCoroutineImplBase() {
+    private val listeners = mutableListOf<ProducerScope<LogServiceProto.Log>>()
 
     private var planetTarget: String = System.getenv("PLANET_SERVICE_TARGET") ?: "localhost:50061"
 
@@ -22,7 +24,8 @@ class LogServiceImpl: LogServiceImplBase(coroutineContext = newFixedThreadPool(4
             .loadBalancerFactory(RoundRobinLoadBalancerFactory.getInstance())
             .usePlaintext()
             .build()
-    private val planetStub = PlanetServiceGrpc.newStub(planetChannel)
+
+    private val planetStub = PlanetServiceGrpcKt.PlanetServiceCoroutineStub(planetChannel)
 
     override suspend fun newPlanet(request: PlanetProto.Planet): Empty {
         notifyUsers("Planet ${request.name} was born.")
@@ -37,16 +40,15 @@ class LogServiceImpl: LogServiceImplBase(coroutineContext = newFixedThreadPool(4
         return Empty.getDefaultInstance()
     }
 
-    override fun newUser(request: LogServiceProto.User): ReceiveChannel<LogServiceProto.Log> {
-        val channel = Channel<LogServiceProto.Log>()
-        listeners.add(channel)
-        launch { notifyUsers("User ${request.name} joined.") }
-        return channel
+    override fun newUser(request: LogServiceProto.User): Flow<LogServiceProto.Log> = channelFlow {
+        listeners.add(this)
+        GlobalScope.launch { notifyUsers("User ${request.name} joined.") }
+        awaitClose {  }
     }
 
     private suspend fun notifyUsers(message: String) =
         listeners.forEach {
-            launch {
+            GlobalScope.launch {
                 it.send(LogServiceProto.Log.newBuilder()
                         .setMessage(message)
                         .build())

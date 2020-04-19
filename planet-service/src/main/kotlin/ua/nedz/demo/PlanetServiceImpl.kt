@@ -1,14 +1,12 @@
 package ua.nedz.demo
 
 import com.google.protobuf.Empty
-import kotlinx.coroutines.asCoroutineDispatcher
 import ua.nedz.grpc.PlanetProto
-import ua.nedz.grpc.PlanetServiceImplBase
+import ua.nedz.grpc.PlanetServiceGrpcKt
 import ua.nedz.grpc.PlanetServiceProto
-import java.util.concurrent.Executors
 import java.util.concurrent.atomic.AtomicLong
 
-class PlanetServiceImpl : PlanetServiceImplBase(coroutineContext = Executors.newFixedThreadPool(4).asCoroutineDispatcher()) {
+class PlanetServiceImpl : PlanetServiceGrpcKt.PlanetServiceCoroutineImplBase() {
     private val counter = AtomicLong(1000L)
     init {
         PlanetRepo.initialPlanets()
