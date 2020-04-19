@@ -4,15 +4,17 @@ import com.google.protobuf.Empty
 import io.grpc.ManagedChannelBuilder
 import io.grpc.internal.DnsNameResolverProvider
 import io.grpc.util.RoundRobinLoadBalancerFactory
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.FlowCollector
-import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.channels.ProducerScope
+import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import ua.nedz.grpc.*
 
+@ExperimentalCoroutinesApi
 class LogServiceImpl: LogServiceGrpcKt.LogServiceCoroutineImplBase() {
-    private val listeners = mutableListOf<FlowCollector<LogServiceProto.Log>>()
+    private val listeners = mutableListOf<ProducerScope<LogServiceProto.Log>>()
 
     private var planetTarget: String = System.getenv("PLANET_SERVICE_TARGET") ?: "localhost:50061"
 
@@ -38,15 +40,16 @@ class LogServiceImpl: LogServiceGrpcKt.LogServiceCoroutineImplBase() {
         return Empty.getDefaultInstance()
     }
 
-    override fun newUser(request: LogServiceProto.User): Flow<LogServiceProto.Log> = flow {
+    override fun newUser(request: LogServiceProto.User): Flow<LogServiceProto.Log> = channelFlow {
         listeners.add(this)
         GlobalScope.launch { notifyUsers("User ${request.name} joined.") }
+        awaitClose {  }
     }
 
     private suspend fun notifyUsers(message: String) =
         listeners.forEach {
             GlobalScope.launch {
-                it.emit(LogServiceProto.Log.newBuilder()
+                it.send(LogServiceProto.Log.newBuilder()
                         .setMessage(message)
                         .build())
             }

@@ -6,8 +6,11 @@ import com.vaadin.server.FileResource
 import com.vaadin.server.VaadinService
 import com.vaadin.server.VaadinSession
 import com.vaadin.ui.*
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.ObsoleteCoroutinesApi
+import kotlinx.coroutines.channels.ProducerScope
+import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import ua.nedz.grpc.PlanetProto
@@ -15,6 +18,7 @@ import ua.nedz.grpc.ScoreServiceProto
 import java.io.File
 
 
+@ExperimentalCoroutinesApi
 class DeathStarPage : VerticalLayout(), View {
     companion object {
         const val NAME = ""
@@ -62,7 +66,7 @@ class DeathStarPage : VerticalLayout(), View {
 
     }
 
-    private lateinit var sendFlow: FlowCollector<PlanetProto.DestroyPlanetRequest>
+    private lateinit var sendFlow: ProducerScope<PlanetProto.DestroyPlanetRequest>
 
     @ObsoleteCoroutinesApi
     override fun enter(event: ViewChangeEvent?) {
@@ -70,7 +74,10 @@ class DeathStarPage : VerticalLayout(), View {
         defaultComponentAlignment = Alignment.TOP_CENTER
         addComponents(logo, game, services)
 
-        val destroyFlow = flow<PlanetProto.DestroyPlanetRequest> { sendFlow = this }
+        val destroyFlow = channelFlow<PlanetProto.DestroyPlanetRequest> {
+            sendFlow = this
+            awaitClose {  }
+        }
 
         val (planets, logs, scores) = client.join(uName, destroyFlow)
 
@@ -130,7 +137,7 @@ class DeathStarPage : VerticalLayout(), View {
                             addClickListener {
                                 GlobalScope.launch {
                                     if (client.succesfulDestroyAttempt(planet)) {
-                                        sendFlow.emit(client.DestroyPlanetRequest {
+                                        sendFlow.send(client.DestroyPlanetRequest {
                                             userName = uName
                                             planetId = planet.planetId
                                             weight = planet.weight

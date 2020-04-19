@@ -3,9 +3,10 @@ package ua.nedz.demo
 import com.google.protobuf.Empty
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.channels.ProducerScope
+import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.FlowCollector
-import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.launch
 import ua.nedz.grpc.ScoreServiceGrpcKt
 import ua.nedz.grpc.ScoreServiceProto
@@ -13,7 +14,8 @@ import ua.nedz.grpc.ScoreServiceProto
 class ScoreServiceImpl: ScoreServiceGrpcKt.ScoreServiceCoroutineImplBase() {
 
     private val scoresMap = mutableMapOf<String, Long>()
-    private val listeners = mutableListOf<FlowCollector<ScoreServiceProto.ScoresResponse>>()
+    @OptIn(ExperimentalCoroutinesApi::class)
+    private val listeners = mutableListOf<ProducerScope<ScoreServiceProto.ScoresResponse>>()
 
     override suspend fun addScore(request: ScoreServiceProto.AddScoreRequest): Empty {
         scoresMap.putIfAbsent(request.userName, 0)
@@ -24,7 +26,7 @@ class ScoreServiceImpl: ScoreServiceGrpcKt.ScoreServiceCoroutineImplBase() {
         return Empty.getDefaultInstance()
     }
 
-    private fun notifyListeners(vararg listeners: FlowCollector<ScoreServiceProto.ScoresResponse>) {
+    private fun notifyListeners(vararg listeners: ProducerScope<ScoreServiceProto.ScoresResponse>) {
         val allScores = ScoreServiceProto.ScoresResponse.newBuilder()
                 .addAllScores(scoresMap.entries.sortedByDescending { it.value }.map { (id, value) ->
                     Score {
@@ -35,14 +37,15 @@ class ScoreServiceImpl: ScoreServiceGrpcKt.ScoreServiceCoroutineImplBase() {
                 .build()
 
         listeners.forEach {
-            GlobalScope.launch { it.emit(allScores) }
+            GlobalScope.launch { it.send(allScores) }
         }
     }
 
     @ExperimentalCoroutinesApi
-    override fun scores(request: Empty): Flow<ScoreServiceProto.ScoresResponse> = flow {
+    override fun scores(request: Empty): Flow<ScoreServiceProto.ScoresResponse> = channelFlow {
         listeners.add(this)
         notifyListeners(this)
+        awaitClose {  }
     }
 
     private fun Score(init: ScoreServiceProto.Score.Builder.() -> Unit) =

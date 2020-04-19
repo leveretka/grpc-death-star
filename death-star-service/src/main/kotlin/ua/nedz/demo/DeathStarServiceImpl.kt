@@ -1,10 +1,10 @@
 package ua.nedz.demo
 
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.FlowCollector
-import kotlinx.coroutines.flow.collect
-import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.channels.ProducerScope
+import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import ua.nedz.grpc.DeathStarServiceGrpcKt
 import ua.nedz.grpc.LogServiceGrpcKt
@@ -13,9 +13,10 @@ import ua.nedz.grpc.PlanetProto.Planets
 import ua.nedz.grpc.PlanetServiceGrpcKt
 import ua.nedz.grpc.ScoreServiceGrpcKt
 
+@ExperimentalCoroutinesApi
 class DeathStarServiceImpl : DeathStarServiceGrpcKt.DeathStarServiceCoroutineImplBase() {
 
-    private val listeners = mutableListOf<FlowCollector<Planets>>()
+    private val listeners = mutableListOf<ProducerScope<Planets>>()
 
     private var planetTarget: String = System.getenv("PLANET_SERVICE_TARGET") ?: "localhost:50061"
     private var scoreTarget: String = System.getenv("SCORE_SERVICE_TARGET") ?: "localhost:50071"
@@ -30,10 +31,10 @@ class DeathStarServiceImpl : DeathStarServiceGrpcKt.DeathStarServiceCoroutineImp
     private val logChannel = channelForTarget(logTarget)
     private val logStub = LogServiceGrpcKt.LogServiceCoroutineStub(logChannel)
 
-    override fun destroy(requests: Flow<DestroyPlanetRequest>): Flow<Planets> = flow {
+    override fun destroy(requests: Flow<DestroyPlanetRequest>): Flow<Planets> = channelFlow {
         listeners.add(this)
         GlobalScope.launch {
-            emit(populateWithCoordinates(planetStub.getAllPlanets()))
+            send(populateWithCoordinates(planetStub.getAllPlanets()))
             requests.collect { request ->
                 val wasRemoved = planetStub.removePlanet(RemovePlanetRequest { planetId = request.planetId })
                 if (wasRemoved.result) {
@@ -45,12 +46,13 @@ class DeathStarServiceImpl : DeathStarServiceGrpcKt.DeathStarServiceCoroutineImp
                     val newPlanet = planetStub.generateNewPlanet()
                     logStub.newPlanet(newPlanet)
                     listeners.forEach {
-                        it.emit(Planets {
+                        it.send(Planets {
                             addPlanets(populateWithCoordinates(newPlanet, request.coordinates.x, request.coordinates.y))
                         })
                     }
                 }
             }
         }
+        awaitClose {  }
     }
 }
