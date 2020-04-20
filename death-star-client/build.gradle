@@ -13,7 +13,7 @@ dependencies {
     compile "com.vaadin:vaadin-push:8.1.8"
     compile "io.grpc:grpc-kotlin-stub:0.1.1"
 
-    compile files ('death-star-api-1.0-SNAPSHOT.jar')
+    compile project(":death-star-api")
 
     testCompile group: 'junit', name: 'junit', version: '4.12'
     testCompile "io.grpc:grpc-testing:${grpcVersion}"
