@@ -3,7 +3,7 @@ apply plugin: 'maven'
 apply plugin: 'idea'
 apply plugin: "com.github.johnrengelman.shadow"
 
-def grpcVersion = '1.15.1'
+def grpcVersion = '1.28.1'
 
 dependencies {
     compile "org.jetbrains.kotlin:kotlin-stdlib-jdk8"
