@@ -3,7 +3,6 @@ package ua.nedz.demo
 import com.google.protobuf.Empty
 import io.grpc.ManagedChannelBuilder
 import io.grpc.internal.DnsNameResolverProvider
-import io.grpc.util.RoundRobinLoadBalancerFactory
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.channels.ProducerScope
@@ -21,7 +20,6 @@ class LogServiceImpl: LogServiceGrpcKt.LogServiceCoroutineImplBase() {
     private val planetChannel = ManagedChannelBuilder
             .forTarget(planetTarget)
             .nameResolverFactory(DnsNameResolverProvider())
-            .loadBalancerFactory(RoundRobinLoadBalancerFactory.getInstance())
             .usePlaintext()
             .build()
 
