@@ -7,10 +7,6 @@ def grpcVersion = '1.28.1'
 
 sourceCompatibility = 1.8
 
-repositories {
-    mavenCentral()
-}
-
 dependencies {
     compile "org.jetbrains.kotlin:kotlin-stdlib-jdk8"
     compile "com.google.api.grpc:proto-google-common-protos:1.0.0"
