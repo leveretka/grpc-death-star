@@ -15,4 +15,8 @@ buildscript {
 allprojects {
     group = "ua.nedz.demo"
     version = "1.0-SNAPSHOT"
+
+    repositories {
+        mavenCentral()
+    }
 }
