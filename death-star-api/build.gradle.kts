@@ -1,6 +1,7 @@
 import com.google.protobuf.gradle.*
 
 apply(plugin = "com.google.protobuf")
+apply(plugin = "idea")
 
 repositories {
     mavenCentral()
